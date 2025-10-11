@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { pass } from "three/tsl";
 
 
 const userSchema = new Schema({
