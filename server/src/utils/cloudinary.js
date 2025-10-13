@@ -15,15 +15,13 @@ const uploadToCloudinary = async (localFilePath) => {
             resource_type: "auto"
         });
 
-        console.log("File successfully uploaded to cloud. The publuic url is here: ", response.url);
-
+        fs.unlinkSync(localFilePath);
         return response;
     }
     catch (error) {
         fs.unlinkSync(localFilePath); // Remove the locally saved temporsry file as the upload operation got failed.
-        console.error(error);
         return null;
     }
 };
 
-export  {uploadToCloudinary};
+export { uploadToCloudinary };

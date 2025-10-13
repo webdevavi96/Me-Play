@@ -17,11 +17,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { fullName, username, email, password } = req.body
 
+
     // Validating user data
     if ([fullName, username, email, password].some((field) => field?.trim() === "")) throw new ApiError(400, "All fields are required!");
 
     // Checking is exist or not
-    const existingUser = User.findOne({
+    const existingUser = await User.findOne({
         $or: [
             { username },
             { email }
@@ -34,6 +35,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // storing the refrence path of the files 
     const avatarLocalPath = req.files?.avatar[0]?.path;
     const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
 
     if (!avatarLocalPath) throw new ApiError(400, "Avatar Image is required!");
 
