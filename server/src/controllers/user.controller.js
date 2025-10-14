@@ -4,6 +4,27 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 
+// Generating Access and Refresh tokens ->
+
+const generateAccesssAndRefreshToken = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+
+        const accessToken = user.generateAccessTokenn();
+        const refreshToken = user.generateRefreshTokenn();
+
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+
+    } catch (error) {
+        throw new ApiError(500, "Internal server error! Please try again later.");
+    }
+}
+
+// Register methode definition ->
+
 const registerUser = asyncHandler(async (req, res) => {
     // get user details from front end
     // validaton - not empty
@@ -40,7 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) coverImageLocalPath = req.files.coverImage.path;
 
- 
+
     if (!avatarLocalPath) throw new ApiError(400, "Avatar Image is required!");
 
 
@@ -76,4 +97,78 @@ const registerUser = asyncHandler(async (req, res) => {
 
 });
 
-export { registerUser }
+
+// Login methode definition -
+
+const LogInUser = asyncHandler(async (req, res) => {
+    // get user details from front end.
+    // username or email.
+    // Validate whether the details or not empty.
+    // Verify the details that user exists or not.
+    // Check for password is correct or not.
+    // access token and refresh token.
+    // send cookie.
+
+    const { username, email, password } = req.body;
+
+    if (!(username || email)) throw new ApiError(400, "username or password is required!");
+
+    const user = await User.findOne({ $or: [{ username }, { email }] });
+    if (!user) throw new ApiError(404, "User does not exist!");
+
+    const isPassword = await user.isPasswordCorrect(password);
+    if (!isPassword) throw new ApiError(401, "Incorrect password!");
+
+    const { accessToken, refreshToken } = await generateAccesssAndRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(200, {
+                user: user, accessToken, refreshToken
+            },
+                "Log in successfull"
+            )
+        )
+
+});
+
+
+// Log out user ->
+
+const logOutUser = asyncHandler(async (req, res) => {
+    User.findOneAndUpdate(req.user._id, {
+        $set: {
+            refreshToken: undefined
+        }
+    },
+        {
+            new: true
+        }
+    );
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", options)
+        .cookie("refreshToken", options)
+        .json(new ApiResponse(200, "Log out successfull!"))
+
+});
+
+
+
+export { registerUser, LogInUser, logOutUser }
