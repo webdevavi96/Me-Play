@@ -6,7 +6,6 @@ import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 
 // Generating Access and Refresh tokens ->
-
 const generateAccesssAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -25,7 +24,6 @@ const generateAccesssAndRefreshToken = async (userId) => {
 }
 
 // Register methode definition ->
-
 const registerUser = asyncHandler(async (req, res) => {
     // get user details from front end
     // validaton - not empty
@@ -88,7 +86,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
 // Login methode definition -
-
 const LogInUser = asyncHandler(async (req, res) => {
     // get user details from front end.
     // username or email.
@@ -134,7 +131,6 @@ const LogInUser = asyncHandler(async (req, res) => {
 
 
 // Log out user ->
-
 const logOutUser = asyncHandler(async (req, res) => {
     User.findOneAndUpdate(req.user._id, {
         $set: {
@@ -161,7 +157,6 @@ const logOutUser = asyncHandler(async (req, res) => {
 
 
 // Refresh access token ->
-
 const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -194,4 +189,85 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, LogInUser, logOutUser, refreshAccessToken }
+
+// Change password->
+const chnageCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+    if (!isPasswordCorrect) throw new ApiError(400, "Invalid password");
+
+    user.password = newPassword
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(ApiResponse(200, {}, "Password changed successfully"));
+
+});
+
+
+// getting current user
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(ApiResponse(200, req.user, "Current user fetched successfully"));
+});
+
+
+// Text data updating
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body;
+    if (!(fullName || email)) throw new ApiError(400, "All fields are required");
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: { fullName, email }
+        }, { new: true }).select("-password");
+
+    return res
+        .status(200)
+        .json(ApiResponse(200, user, "Account details updated successfully"));
+
+});
+
+// Avatar updating
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) throw new ApiError(400, "Avatar image file is required");
+
+    const avatar = await uploadToCloudinary(avatarLocalPath);
+    if (!avatar) throw new ApiError(400, "Error while uploading avatar image");
+
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        $set: { avatar: avatar.url }
+    }, { new: true }).select("-password");
+    return res.status(200).json(ApiResponse(200, user, "Avatar image updated successfully"));
+});
+
+
+// Image data updating
+const updateUsercoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path;
+    if (!coverImageLocalPath) throw new ApiError(400, "cover image file is required");
+
+    const coverImage = await uploadToCloudinary(coverImageLocalPath);
+    if (!coverImage) throw new ApiError(400, "Error while uploading cover image");
+
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        $set: { coverImage: coverImage.url }
+    }, { new: true }).select("-password");
+    return res.status(200).json(ApiResponse(200, user, "cover image updated successfully"));
+});
+
+export {
+    registerUser,
+    LogInUser,
+    logOutUser,
+    refreshAccessToken,
+    chnageCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUsercoverImage
+}
