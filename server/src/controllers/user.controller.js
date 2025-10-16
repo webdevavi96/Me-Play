@@ -202,7 +202,7 @@ const chnageCurrentPassword = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(ApiResponse(200, {}, "Password changed successfully"));
+        .json(new ApiResponse(200, {}, "Password changed successfully"));
 
 });
 
@@ -211,7 +211,7 @@ const chnageCurrentPassword = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
-        .json(ApiResponse(200, req.user, "Current user fetched successfully"));
+        .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 
@@ -227,7 +227,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(ApiResponse(200, user, "Account details updated successfully"));
+        .json(new ApiResponse(200, user, "Account details updated successfully"));
 
 });
 
@@ -242,7 +242,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user?._id, {
         $set: { avatar: avatar.url }
     }, { new: true }).select("-password");
-    return res.status(200).json(ApiResponse(200, user, "Avatar image updated successfully"));
+    return res.status(200).json(new ApiResponse(200, user, "Avatar image updated successfully"));
 });
 
 
@@ -257,7 +257,7 @@ const updateUsercoverImage = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user?._id, {
         $set: { coverImage: coverImage.url }
     }, { new: true }).select("-password");
-    return res.status(200).json(ApiResponse(200, user, "cover image updated successfully"));
+    return res.status(200).json(new ApiResponse(200, user, "cover image updated successfully"));
 });
 
 export {
