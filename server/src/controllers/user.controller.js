@@ -39,11 +39,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { fullName, username, email, password } = req.body
 
-
     // Validating user data
     if ([fullName, username, email, password].some((field) => field?.trim() === "")) throw new ApiError(400, "All fields are required!");
 
-    // Checking is exist or not
+    // Checking user is exist or not
     const existingUser = await User.findOne({
         $or: [
             { username },
@@ -59,10 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
     let coverImageLocalPath
-
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) coverImageLocalPath = req.files.coverImage[0].path;
-
-
     if (!avatarLocalPath) throw new ApiError(400, "Avatar Image is required!");
 
 
@@ -74,27 +70,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Creating user in database
     const user = await User.create({
-        fullName,
-        email,
-        password,
-        avatar: avatar.url,
-        username: username.toLowerCase(),
-        coverImage: coverImage?.url || "",
-
+        fullName, email, password, avatar: avatar.url, username: username.toLowerCase(), coverImage: coverImage?.url || "",
     });
 
     // checking if the user created or not
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
-
     if (!createdUser) throw new ApiError(500, "Something went wrong while registring the user!");
 
     // Returning response to front end..
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered successfully.")
     );
-
 
 });
 
