@@ -248,14 +248,14 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 
 // Image data updating
-const updateUsercoverImage = asyncHandler(async (req, res) => {
+const updateUserCoverImage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.file?.path;
     if (!coverImageLocalPath) throw new ApiError(400, "cover image file is required");
 
     const coverImage = await uploadToCloudinary(coverImageLocalPath);
     if (!coverImage) throw new ApiError(400, "Error while uploading cover image");
 
-    const user = await User.findByIdAndUpdate(req.user?._id, {
+    const user = await User.findByIdAndUpdate(req.user._id, {
         $set: { coverImage: coverImage.url }
     }, { new: true }).select("-password");
     return res.status(200).json(new ApiResponse(200, user, "cover image updated successfully"));
@@ -273,7 +273,7 @@ const getUserChannelList = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "Subscription",
+                from: "subscription",
                 localField: "_id",
                 foreignField: "channel",
                 as: "subscribers"
@@ -281,7 +281,7 @@ const getUserChannelList = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "Subscription",
+                from: "subscription",
                 localField: "_id",
                 foreignField: "subscriber",
                 as: "subscribedTo"
@@ -289,13 +289,17 @@ const getUserChannelList = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                subscribersCount: { $size: "$subscriber" },
-                channelsSubscribedToCount: { $size: "subscribedTo" },
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
                 isSubscribed: {
                     $cond: {
                         if: { $in: [req.user?._id, "$subscribers.subscriber"] },
                         then: true,
-                        else: true
+                        else: false
                     }
                 }
             }
@@ -317,7 +321,7 @@ const getUserChannelList = asyncHandler(async (req, res) => {
     if (!channel?.length) throw new ApiError(404, "Channel does not exists");
     return res
         .status(200)
-        .json(new ApiResponse(200, channel[0], "User channel fetched successfully")); fffffff
+        .json(new ApiResponse(200, channel[0], "User channel fetched successfully"));
 
 });
 
@@ -327,7 +331,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     const user = await User.aggregate([
         {
             $match: {
-                _id: new mongoose.Types.ObjectId(req.user._id)
+                _id: req.user?._id
             }
         },
         {
@@ -357,7 +361,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                     {
                         $addFields: {
                             owner: {
-                                $first: "owner"
+                                $first: "$owner"
                             }
                         }
                     }
@@ -365,6 +369,11 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             }
         }
     ]);
+
+    if (user[0].watchHistory.length <= 0)
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "User haven't watched anything yet"));
 
     return res
         .status(200)
@@ -382,7 +391,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUsercoverImage,
+    updateUserCoverImage,
     getUserChannelList,
     getWatchHistory
 }
