@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import deleteItem from "../utils/deleteItem.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -175,17 +176,32 @@ const deleteVideo = asyncHandler(async (req, res) => {
     //TODO: delete video
     const { videoId } = req.params;
     const validVideoId = isValidObjectId(videoId);
-
     if (!validVideoId) throw new ApiError(400, "Video id is not valid");
-    const video = Video.findById(videoId);
+
+    const video = await Video.findById(videoId);
+    if (!video) throw new ApiError(404, "Video not found");
     if (req.user._id.toString() !== video.publisher.toString()) throw new ApiError(403, "You can not perform this operation");
+
+    const videoUrl = video.videoFile;
+    const thumbnailUrl = video.thumbnail;
+
+    if (!videoUrl) throw new ApiError(404, "Video not found");
+    if (!thumbnailUrl) throw new ApiError(404, "Thumbnail not found");
+
+    const videoDeleteRes = await deleteItem(videoUrl, type = "video");
+    const thumbnailDeleteRes = await deleteItem(thumbnailUrl, type = "image")
     await video.deleteOne();
+
+    const isVideoDeleted = videoDeleteRes?.result === "ok" || videoDeleteRes?.result === "not found";
+    const isThumbDeleted = thumbnailDeleteRes?.result === "ok" || thumbnailDeleteRes?.result === "not found";
+
+    if (!(isVideoDeleted || isThumbDeleted)) throw new ApiError(500, "Error while deleting resource")
 
     return res
         .status(200)
         .json(new ApiResponse(200, "Video deleted successfully"));
 
-})
+});
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
@@ -204,7 +220,8 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, videoPublishStatus[0], "Video status changed successfully"));
 
-})
+});
+
 
 export {
     getAllVideos,

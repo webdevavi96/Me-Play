@@ -28,15 +28,42 @@ router.route("/register").post(
 router.route("/login").post(LogInUser);
 
 // Secured routes
-router.route("/logout").post(verifyJWT, logOutUser);
+router.route("/logout").post(
+    verifyJWT,
+    logOutUser
+);
+router.route("/history").get(
+    verifyJWT,
+    getWatchHistory
+);
+router.route("/current-user").get(
+    verifyJWT,
+    getCurrentUser
+);
+router.route("/update-account").post(
+    verifyJWT,
+    updateAccountDetails
+);
+router.route("/channel/:username").get(
+    verifyJWT,
+    getUserChannelList
+);
+router.route("/change-password").post(
+    verifyJWT,
+    chnageCurrentPassword
+);
+router.route("/update-avatar-image").patch(
+    verifyJWT,
+    upload.single("avatar"),
+    updateUserAvatar
+);
+router.route("/update-cover-image").patch(
+    verifyJWT,
+    upload.single("coverImage"),
+    updateUserCoverImage
+);
 router.route("/refresh-token").post(refreshAccessToken);
-router.route("/history").get(verifyJWT, getWatchHistory);
-router.route("/current-user").get(verifyJWT, getCurrentUser);
-router.route("/update-account").post(verifyJWT, updateAccountDetails);
-router.route("/channel/:username").get(verifyJWT, getUserChannelList);
-router.route("/change-password").post(verifyJWT, chnageCurrentPassword);
-router.route("/update-avatar-image").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
-router.route("/update-cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+
 
 
 export default router;

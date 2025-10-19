@@ -11,22 +11,26 @@ router.route("/upload-video").post(
     upload.fields([{ name: "thumbnail", maxCount: 1 }, { name: "videoFile", maxCount: 1 }]),
     publishAVideo
 );
-
-router.route("/all-videos").get(verifyJWT, getAllVideos);
-router.route("/video/:videoId").get(verifyJWT, getVideoById);
+router.route("/all-videos").get(
+    verifyJWT,
+    getAllVideos
+);
+router.route("/video/:videoId").get(
+    verifyJWT,
+    getVideoById
+);
 router.route("/update-video/:videoId").post(
     verifyJWT,
     upload.fields([{ name: "thumbnail", maxCount: 1 }, { name: "videoFile", maxCount: 1 }]),
     updateVideo
 );
-router.route("/deletet-video/:videoId").get(
-    verifyJWT,
-    deleteVideo
-);
 router.route("/video-status/:videoId").get(
     verifyJWT,
     togglePublishStatus
 );
-
+router.route("/delete-video/:videoId").get(
+    verifyJWT,
+    deleteVideo
+);
 
 export default router;
