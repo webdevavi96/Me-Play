@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadToCloudinary } from "../utils/cloudinary.js"
 import deleteItem from "../utils/deleteItem.js"
 
 
@@ -56,8 +56,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
     if (!thumbnailLocalPath) throw new ApiError(400, "Thumbnail file field is required");
 
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-    const videoFile = await uploadOnCloudinary(videoLocalPath);
+    const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
+    const videoFile = await uploadToCloudinary(videoLocalPath);
     if (!thumbnail) throw new ApiError(500, "Error while uploading thumbnail on cloud");
     if (!videoFile) throw new ApiError(500, "Error while uploading video on cloud");
     const video = await Video.create({
@@ -150,8 +150,8 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (!videoLocalPath) throw new ApiError(400, "Video file field is required");
     if (!thumbnailLocalPath) throw new ApiError(400, "Thumbnail file field is required");
 
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-    const videoFile = await uploadOnCloudinary(videoLocalPath);
+    const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
+    const videoFile = await uploadToCloudinary(videoLocalPath);
 
     if (!thumbnail) throw new ApiError(500, "Error while uploading thumbnail");
     if (!videoFile) throw new ApiError(500, "Error while uploding video");

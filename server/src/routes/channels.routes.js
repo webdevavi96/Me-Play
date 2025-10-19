@@ -4,15 +4,15 @@ import { Router } from "express";
 
 const router = Router();
 
-router.route("/toggle-subscription/:channelId").get(
+router.route("/toggle-subscribe/:channelId").post(
     verifyJWT,
     toggleSubscription
 );
-router.route("/subscribers-list/:channelId").get(
+router.route("/subscribers-list/:channelId").post(
     verifyJWT,
     getUserChannelSubscribers
 );
-router.route("/subscribed-channels/:channelId").get(
+router.route("/subscribed-channels/:subscriberId").post(
     verifyJWT,
     getSubscribedChannels
 );
