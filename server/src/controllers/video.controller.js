@@ -11,33 +11,40 @@ import deleteItem from "../utils/deleteItem.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     //TODO: get all videos based on query, sort, pagination
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-    if (!userId) throw new ApiError(400, "User id is missing");
-    const skip = (page - 1) * limit;
+    const pagenum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pagenum - 1) * limitNum;
+
+    const match = {};
+
+    if (!userId) throw new ApiError(401, "User id not found");
+    match.publisher = new mongoose.Types.ObjectId(userId);
+
+    if (!query) throw new ApiError(402, "Something went wrong, please try again latter");
+    match.$or = [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } }
+    ];
+
     const videos = await Video.aggregate([
-        {
-            $match: { user: new mongoose.Types.ObjectId(userId) }
-        },
-        {
-            $sort: { [sortBy]: sortType === "asc" ? 1 : -1 }
-        },
-        {
-            $skip: skip
-        },
-        {
-            $limit: parseInt(limit)
-        }
+        { $match: match },
+        { $sort: { [sortBy]: sortType === "asc" ? 1 : - 1 } },
+        { $skip: skip },
+        { $limit: limitNum }
     ]);
 
-    const totalCountAgr = await Video.countDocuments({
-        $match: { user: new mongoose.Types.ObjectId(userId) }
-    });
-
-    const totalCount = Math.ceil(totalCountAgr / limit)
+    const totalVideos = await Video.countDocuments(match);
+    const totalPages = Math.ceil(totalVideos / limitNum);
 
     const data = {
         videos,
-        totalCount
-    }
+        pagination: {
+            totalVideos,
+            totalPages,
+            currentPage: pagenum,
+            limit: limitNum
+        }
+    };
 
     return res
         .status(200)
@@ -49,8 +56,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     // TODO: get video, upload to cloudinary, create video
     const { title, description } = req.body
     if (!(title || description)) throw new ApiError(400, "All fields are required");
-
-    const videoLocalPath = req.files?.video[0]?.path;
+    const videoLocalPath = req.files?.videoFile[0]?.path;
     if (!videoLocalPath) throw new ApiError(400, "Something went wrong while uploading video.");
 
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
@@ -63,7 +69,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const video = await Video.create({
         title,
         description,
-        thumbnail: thumbnail || null,
+        thumbnail: thumbnail.secure_url || null,
         duration: videoFile.duration,
         videoFile: videoFile.url,
         publisher: req.user?._id,
@@ -188,8 +194,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!videoUrl) throw new ApiError(404, "Video not found");
     if (!thumbnailUrl) throw new ApiError(404, "Thumbnail not found");
 
-    const videoDeleteRes = await deleteItem(videoUrl, type = "video");
-    const thumbnailDeleteRes = await deleteItem(thumbnailUrl, type = "image")
+    const videoDeleteRes = await deleteItem(videoUrl, "video");
+    const thumbnailDeleteRes = await deleteItem(thumbnailUrl, "image")
     await video.deleteOne();
 
     const isVideoDeleted = videoDeleteRes?.result === "ok" || videoDeleteRes?.result === "not found";
