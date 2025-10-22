@@ -23,13 +23,18 @@ const getChannelStats = asyncHandler(async (req, res) => {
     const likes = await Like.find({ user: userId });
     const likesByUser = likes.length;
 
+    const comments = await Comment.find({ owner: userId });
+    const commentsCount = comments.length;
+
 
     const data = {
         totalVideos,
         totalViews,
         totalLikes,
         subscribedChannelsCount,
-        likesByUser
+        likesByUser,
+        comments,
+        commentsCount
     }
 
     return res

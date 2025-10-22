@@ -1,5 +1,0 @@
-1. get the user id from req
-2. find the user via userId
-3. get the all videos assosiated with user
-4. create pagignations
-5. send response
