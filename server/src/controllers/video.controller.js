@@ -123,8 +123,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                 duration: 1,
                 views: 1,
                 createdAt: 1,
-                publisher: 1
-            }
+                publisher: 1            }
         }
 
     ]);

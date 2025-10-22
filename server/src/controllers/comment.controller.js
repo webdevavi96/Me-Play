@@ -7,8 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
-    const { videoId } = req.params;
-    const { page = 1, limit = 10 } = req.query;
+    const { videoId, page = 1, limit = 10 } = req.query;
     const userId = req.user._id;
     if (!userId) throw new ApiError(404, "unAuthorised access");
 
@@ -42,11 +41,13 @@ const getVideoComments = asyncHandler(async (req, res) => {
         { $limit: limitNum }
     ]);
 
-    const totalComments = Comment.countDocuments({ video: videoId });
+    const totalComments = await Comment.countDocuments({ video: videoId });
 
-    if (!totalComments) return res
-        .status(200)
-        .json(new ApiResponse(200, "No comments made yet"));
+    if (!totalComments) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "No comments made yet"));
+    };
 
     const data = {
         totalComments: totalComments,

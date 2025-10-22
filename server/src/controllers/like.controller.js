@@ -15,7 +15,7 @@ const toggleLikeVideo = asyncHandler(async (req, res) => {
     if (!(isValidObjectId(userId))) throw new ApiError(400, "Unauthirized access");
 
     const video = await Video.findById(videoId);
-    if (!video) throw new ApiError(401, "Video not found");
+    if (!video) throw new ApiError(404, "Video not found");
 
     const likedAlready = await Like.findOne({
         likedTo: videoId,
@@ -41,24 +41,22 @@ const toggleLikeVideo = asyncHandler(async (req, res) => {
 
 const getAllLikedVideos = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-    if (!(isValidObjectId(userId))) throw new ApiError(400, "Unauthorized access");
+    if (!isValidObjectId(userId)) throw new ApiError(401, "Unauthorized access");
 
     const likedVideos = await Like.aggregate([
         { $match: { likedBy: new mongoose.Types.ObjectId(userId) } },
         {
             $lookup: {
-                from: "Videos",
-                localField: "video",
+                from: "videos",
+                localField: "likedTo",
                 foreignField: "_id",
                 as: "videoData"
             }
         },
-        {
-            $unwind: "$videoData"
-        },
+        { $unwind: "$videoData" },
         {
             $lookup: {
-                from: "Users",
+                from: "users",
                 localField: "videoData.publisher",
                 foreignField: "_id",
                 as: "publisher"
@@ -68,18 +66,19 @@ const getAllLikedVideos = asyncHandler(async (req, res) => {
         {
             $project: {
                 _id: 0,
-                videoId: "$videoData.videoId",
+                videoId: "$videoData._id",
                 title: "$videoData.title",
                 videoUrl: "$videoData.videoFile",
                 thumbnail: "$videoData.thumbnail",
                 username: "$publisher.username",
-                fullName: "$$publisher.fullName",
-                avatar: "$$publisher.avatar"
+                fullName: "$publisher.fullName",
+                avatar: "$publisher.avatar"
             }
         }
     ]);
 
-    if (!likedVideos.length) throw new ApiError(400, "User haven't liked anything yet");
+    if (!likedVideos.length)
+        throw new ApiError(404, "User hasn't liked any videos yet");
 
     const data = {
         videos: likedVideos,
@@ -88,9 +87,9 @@ const getAllLikedVideos = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, data, "Liked data fetched successfully"));
-
+        .json(new ApiResponse(200, data, "Liked videos fetched successfully"));
 });
+
 
 
 

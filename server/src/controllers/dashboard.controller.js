@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import { Video } from "../models/video.model.js"
-import { Subscription } from "../models/subscription.model.js"
+import { Subscription } from "../models/subscription.model.js";
+import { Comment } from "../models/comment.model.js";
 import { Like } from "../models/like.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -23,7 +24,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
     const likes = await Like.find({ user: userId });
     const likesByUser = likes.length;
 
-    const comments = await Comment.find({ owner: userId });
+    const comments = await Comment.find({owner: userId})
     const commentsCount = comments.length;
 
 
@@ -33,8 +34,8 @@ const getChannelStats = asyncHandler(async (req, res) => {
         totalLikes,
         subscribedChannelsCount,
         likesByUser,
-        comments,
-        commentsCount
+        commentsCount,
+        comments
     }
 
     return res
