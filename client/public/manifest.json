@@ -1,0 +1,23 @@
+{
+    "name": "Me Play",
+    "short_name": "MPlay",
+    "description": "An alternative video player of You Tube.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#1D4ED8",
+    "orientation": "portrait",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "/iconsicon.png",
+            "sizes": "192x192",
+            "type": "image/pn"
+        },
+        {
+            "src": "/iconsicon.png",
+            "sizes": "512x512",
+            "type": "image/pn"
+        }
+    ]
+}
