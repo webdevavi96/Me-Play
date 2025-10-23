@@ -1,158 +1,132 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { AuthContext } from "../../utils/authContext";
-import { Menu, X } from "lucide-react";
+import { FaHome } from "react-icons/fa";
+import { MdSpaceDashboard } from "react-icons/md";
+import { IoCloudUpload, IoSettingsSharp } from "react-icons/io5";
 
 function Navbar() {
   const { isAuthenticated } = useContext(AuthContext);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect screen size
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <nav className="w-full bg-black/80 backdrop-blur-md border-b border-gray-800 text-white fixed top-0 left-0 z-50">
-      <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+    <header className="fixed top-0 left-0 w-full bg-black/90 text-white z-50 shadow-lg">
+      <div className="flex items-center justify-between px-4 md:px-8 py-3">
         {/* Logo */}
-        <div className="text-2xl md:text-3xl font-extrabold tracking-tight text-red-500">
-          Me <span className="text-white">Play</span>
+        <div className="text-2xl font-extrabold text-red-500 cursor-pointer">
+          {isMobile ? (
+            <>M<span className="text-white">Play</span></>
+          ) : (
+            <>Me<span className="text-white">Play</span></>
+          )}
         </div>
 
-        {/* Desktop Menu */}
-        <ul className="hidden md:flex space-x-8 font-medium">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex gap-6 font-medium items-center">
           {isAuthenticated ? (
             <>
-              <div className="flex flex-1 mx-5 max-w-xl">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="flex-1 px-4 py-2 border rounded-l-full focus:outline-none"
-                />
-                <button className="bg-red-600 text-white px-4 rounded-r-full hover:bg-red-700">
-                  Search
-                </button>
-              </div>
-              <li>
-                <NavLink
-                  to="/home"
-                  className={({ isActive }) =>
-                    isActive
-                      ? "text-red-500 font-semibold border-b-2 border-red-500 pb-1"
-                      : "hover:text-red-400 transition-colors duration-300"
-                  }
-                >
-                  Home
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/dashboard"
-                  className={({ isActive }) =>
-                    isActive
-                      ? "text-red-500 font-semibold border-b-2 border-red-500 pb-1"
-                      : "hover:text-red-400 transition-colors duration-300"
-                  }
-                >
-                  Dashboard
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/upload"
-                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full font-semibold transition-all duration-300"
-                >
-                  Upload
-                </NavLink>
-              </li>
+              <NavLink
+                to="/home"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 ${isActive ? "text-red-500" : "hover:text-red-400"}`
+                }
+              >
+                <FaHome size={18} /> Home
+              </NavLink>
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 ${isActive ? "text-red-500" : "hover:text-red-400"}`
+                }
+              >
+                <MdSpaceDashboard size={18} /> Dashboard
+              </NavLink>
+              <NavLink
+                to="/upload"
+                className="flex items-center gap-2 hover:text-red-400"
+              >
+                <IoCloudUpload size={18} /> Upload
+              </NavLink>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 ${isActive ? "text-red-500" : "hover:text-red-400"}`
+                }
+              >
+                <IoSettingsSharp size={18} /> Settings
+              </NavLink>
             </>
           ) : (
             <>
-              <li>
-                <NavLink
-                  to="/login"
-                  className="hover:text-red-400 transition-colors duration-300"
-                >
-                  Login
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/register"
-                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full font-semibold transition-all duration-300"
-                >
-                  Register
-                </NavLink>
-              </li>
+              <NavLink to="/login" className="hover:text-red-400">
+                Login
+              </NavLink>
+              <NavLink
+                to="/register"
+                className="bg-red-600 px-3 py-1.5 rounded-md hover:bg-red-700 font-semibold"
+              >
+                Register
+              </NavLink>
             </>
           )}
-        </ul>
+        </nav>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden focus:outline-none text-gray-300 hover:text-white"
-        >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+        {/* Mobile Navigation (Icons only) */}
+        <nav className="flex md:hidden gap-5 items-center text-gray-200">
+          {isAuthenticated ? (
+            <>
+              <NavLink
+                to="/home"
+                className={({ isActive }) =>
+                  `${isActive ? "text-red-500" : "hover:text-red-400"}`
+                }
+              >
+                <FaHome size={22} />
+              </NavLink>
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `${isActive ? "text-red-500" : "hover:text-red-400"}`
+                }
+              >
+                <MdSpaceDashboard size={22} />
+              </NavLink>
+              <NavLink
+                to="/upload"
+                className="hover:text-red-400"
+              >
+                <IoCloudUpload size={22} />
+              </NavLink>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `${isActive ? "text-red-500" : "hover:text-red-400"}`
+                }
+              >
+                <IoSettingsSharp size={22} />
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" className="hover:text-red-400 text-lg">
+                🔐
+              </NavLink>
+              <NavLink to="/register" className="hover:text-red-400 text-lg">
+                📝
+              </NavLink>
+            </>
+          )}
+        </nav>
       </div>
-
-      {/* Mobile Dropdown Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-black/90 border-t border-gray-800">
-          <ul className="flex flex-col items-center py-4 space-y-4 font-medium">
-            {isAuthenticated ? (
-              <>
-                <li>
-                  <NavLink
-                    to="/home"
-                    onClick={() => setIsOpen(false)}
-                    className="hover:text-red-400"
-                  >
-                    Home
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to="/profile"
-                    onClick={() => setIsOpen(false)}
-                    className="hover:text-red-400"
-                  >
-                    Profile
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to="/upload"
-                    onClick={() => setIsOpen(false)}
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full font-semibold"
-                  >
-                    Upload
-                  </NavLink>
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <NavLink
-                    to="/login"
-                    onClick={() => setIsOpen(false)}
-                    className="hover:text-red-400"
-                  >
-                    Login
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to="/register"
-                    onClick={() => setIsOpen(false)}
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full font-semibold"
-                  >
-                    Register
-                  </NavLink>
-                </li>
-              </>
-            )}
-          </ul>
-        </div>
-      )}
-    </nav>
+    </header>
   );
 }
 
