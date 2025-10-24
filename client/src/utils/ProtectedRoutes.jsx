@@ -8,6 +8,6 @@ function ProtectedRoutes({children}) {
     const { isAuthenticated } = useContext(AuthContext);
     if (!isAuthenticated) return <Navigate to="/login_required" replace />
     return children;
-};
+}
 
 export default ProtectedRoutes;
