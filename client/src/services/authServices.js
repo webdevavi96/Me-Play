@@ -1,12 +1,13 @@
 import axios from 'axios';
 
-async function login(data) {
+async function loginServices(data) {
 
     try {
-        const response = await axios.post(`${import.meta.env.VITE_AUTH_URL}/login`, data, {
+        const response = await axios.post("/api/v1/users/login", data, {
             withCredentials: true
         });
-        return response.data;
+        console.log(response.data.data.user)
+        return response.data.data;
     } catch (error) {
         console.error(error)
     }
@@ -18,7 +19,7 @@ async function register(data) {
         const response = await axios.post(`${import.meta.env.VITE_AUTH_URL}/register`, data, {
             withCredentials: true
         });
-        return response.data;
+        return response.data.user;
     } catch (error) {
         console.error(error)
     }
@@ -111,4 +112,4 @@ async function chnageCurrentPassword(data) {
 };
 
 
-export { login, logout, register, history, updateAccountDetails, updateUserAvatar, updateUserCoverImage, chnageCurrentPassword, channel }
+export { loginServices, logout, register, history, updateAccountDetails, updateUserAvatar, updateUserCoverImage, chnageCurrentPassword, channel }

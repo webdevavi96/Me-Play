@@ -1,32 +1,27 @@
 import React, { useContext } from "react";
 import { useForm } from "react-hook-form";
 import { NavLink, useNavigate } from "react-router-dom";
-import { login } from "../../../services/authServices"
+import { loginServices } from "../../../services/authServices"
 import { AuthContext } from "../../../utils/authContext"
 
 function Login() {
-  const { setIsAuthenticated } = useContext(AuthContext)
+
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
-    try {
-      const response = await login(data)
-      console.log("Login successful:", response);
-      
-      setIsAuthenticated(true);
-      // You can store token or update AuthContext here
-      localStorage.setItem("accessToken", response?.accessToken);
-      localStorage.setItem("refreshToken", response?.refreshToken);
-      navigate("/home");
-    } catch (error) {
-      console.error("Login failed:", error.response || error.message);
-    }
+    const response = await loginServices(data);
+    const user = response.user;
+    const accessToken = response.accessToken;
+    login(user, accessToken);
+    navigate("/home")
   };
 
   return (
@@ -34,7 +29,7 @@ function Login() {
       {/* Left Image Section */}
       <div className="hidden md:flex md:w-1/2 items-center justify-center bg-black/30">
         <img
-          src="/images/login-side.jpg"
+          src="/images/login.jpg"
           alt="Login Illustration"
           className="w-3/4 rounded-2xl shadow-2xl object-cover"
         />

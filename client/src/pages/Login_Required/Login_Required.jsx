@@ -1,7 +1,13 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import React, { useContext, useEffect } from 'react';
+import { useNavigate, NavLink } from "react-router-dom";
+import { AuthContext } from '../../utils/authContext';
 
 function Login_Required() {
+  const { isAuthenticated } = useContext(AuthContext);
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (isAuthenticated) navigate("/home", { replace: true })
+  }, [isAuthenticated, navigate])
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-gray-900 via-black to-gray-950 text-white px-6">
       {/* Image / Illustration */}
@@ -18,7 +24,7 @@ function Login_Required() {
 
       {/* Message */}
       <p className="text-gray-300 text-center max-w-md mb-8">
-        You need to be logged in to view this page.  
+        You need to be logged in to view this page.
         Please login to continue exploring <span className="text-red-400 font-semibold">MePlay</span> and enjoy exclusive content.
       </p>
 

@@ -1,25 +1,27 @@
-import React from 'react';
-import axios from 'axios';
+import React, { useContext } from "react";
+import { AuthContext } from "../../utils/authContext";
+import Logout from "../../components/Buttons/Logout";
+import capitalizeName from "../../utils/capitaliseName";
 
 function Settings() {
-  const logout = async () => {
-    try {
-      await axios.get(`${import.meta.env.VITE_AUTH_URL}/logout`);
-      // Optional: redirect to login page after logout
-      window.location.href = '/login';
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-  };
+  const { isAuthenticated, user } = useContext(AuthContext);
 
   return (
     <div>
-      <button
-        onClick={logout} // ✅ pass function reference
-        className="px-4 py-2 bg-red-600 text-white rounded"
-      >
-        Logout
-      </button>
+      {isAuthenticated ? (
+        <>
+        <div className="user w-auto flex gap-2 items-center">
+          <img className="w-20 h-20 rounded-full" src={user?.avatar} alt="" />
+          <span>Welcome, {capitalizeName(user?.fullName)}</span>
+        </div>
+
+          <div className="btn py-2">
+            <Logout />
+          </div>
+        </>
+      ) : (
+        <a href="/login">Login</a>
+      )}
     </div>
   );
 }

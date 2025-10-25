@@ -1,32 +1,54 @@
+// src/utils/authContext.jsx
 import { createContext, useState, useEffect } from "react";
+import axios from "axios";
 
-export const AuthContext = createContext({
-    isAuthenticated: false,
-    login: () => { },
-    logout: () => { }
-});
+export const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) setIsAuthenticated(true);
-    }, []);
+  // Rehydrate auth state from localStorage
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    const storedUser = localStorage.getItem("user");
 
-    const login = (token) => {
-        localStorage.setItem("token", token);
-        setIsAuthenticated(true);
-    };
+    if (accessToken && storedUser) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(storedUser));
+      axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+    }
+    setLoading(false);
+  }, []);
 
-    const logout = () => {
-        localStorage.removeItem("token");
-        setIsAuthenticated(false);
-    };
+  const login = (userData, accessToken) => {
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+    axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
 
-    return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
-}
+  const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    delete axios.defaults.headers.common["Authorization"];
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        user,
+        login,
+        logout,
+        loading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
