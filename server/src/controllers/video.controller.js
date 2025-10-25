@@ -29,6 +29,32 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const videos = await Video.aggregate([
         { $match: match },
         { $sort: { [sortBy]: sortType === "asc" ? 1 : - 1 } },
+        {
+            $lookup: {
+                from: "users",
+                localField: "publisher",
+                foreignField: "_id",
+                as: "publisher"
+            }
+        },
+        { $unwind: "$publisher" },
+        {
+            $project: {
+                title: 1,
+                description: 1,
+                thumbnail: 1,
+                videoFile: 1,
+                duration: 1,
+                views: 1,
+                isPublished: 1,
+                createdAt: 1,
+                "publisher._id": 1,
+                "publisher.username": 1,
+                "publisher.fullName": 1,
+                "publisher.avatar": 1,
+            },
+        },
+
         { $skip: skip },
         { $limit: limitNum }
     ]);
@@ -66,11 +92,16 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const videoFile = await uploadToCloudinary(videoLocalPath);
     if (!thumbnail) throw new ApiError(500, "Error while uploading thumbnail on cloud");
     if (!videoFile) throw new ApiError(500, "Error while uploading video on cloud");
+    const formatDuration = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    };
     const video = await Video.create({
         title,
         description,
         thumbnail: thumbnail.secure_url || null,
-        duration: videoFile.duration,
+        duration: formatDuration(videoFile.duration),
         videoFile: videoFile.url,
         publisher: req.user?._id,
         isPublished: true
@@ -94,8 +125,8 @@ const getVideoById = asyncHandler(async (req, res) => {
         {
             $lookup: {
                 from: "users",
-                localField: "_id",
-                foreignField: "publisher",
+                localField: "publisher",
+                foreignField: "_id",
                 as: "publisher",
                 pipeline: [
                     {
@@ -123,7 +154,8 @@ const getVideoById = asyncHandler(async (req, res) => {
                 duration: 1,
                 views: 1,
                 createdAt: 1,
-                publisher: 1            }
+                publisher: 1
+            }
         }
 
     ]);

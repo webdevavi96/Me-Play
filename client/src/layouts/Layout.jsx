@@ -4,16 +4,10 @@ import Footer from "../components/Footer/Footer";
 import { useState, useEffect } from "react";
 
 function Layout() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-    useEffect(() => {
-        const token = localStorage.getItem("accessToken");
-        if (token) setIsAuthenticated(true);
-    }, []);
-
-    return (<>
+    return (
+    <>
         <Navbar />
-        <main className="pt-15 min-h-screen bg-gray-50">
+        <main className="pt-15 min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-950">
             <Outlet />
         </main>
         <Footer />

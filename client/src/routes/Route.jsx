@@ -13,6 +13,7 @@ const Dashboard = lazy(() => import("../pages/Dashboard/Dasboard"));
 const Register = lazy(() => import("../pages/AuthPages/Register/Register"));
 const History = lazy(() => import("../pages/History/History"));
 const Login_Required = lazy(() => import("../pages/Login_Required/Login_Required"));
+const VideoPlayer = lazy(() => import("../pages/Player/VideoPlayer"))
 
 const router = createBrowserRouter([
     {
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
             { path: 'history', element: <ProtectedRoutes><Suspense fallback={<Loader />}><History /></Suspense></ProtectedRoutes> },
             { path: 'dashboard', element: <ProtectedRoutes><Suspense fallback={<Loader />}><Dashboard /></Suspense></ProtectedRoutes> },
             { path: 'settings', element: <ProtectedRoutes><Suspense fallback={<Loader />}><Settings /></Suspense></ProtectedRoutes> },
+            { path: "/watch/:id", element: <ProtectedRoutes><Suspense fallback={<Loader />}><VideoPlayer /></Suspense></ProtectedRoutes> }
         ]
     }
 ]);

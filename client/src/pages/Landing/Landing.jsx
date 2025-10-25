@@ -14,8 +14,8 @@ function Landing() {
       <div className="w-full min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-950 text-white flex flex-col">
 
         {/* Hero Section */}
-        <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-16 py-20 md:py-32 gap-10">
-          <div className="flex-1 space-y-6 text-center md:text-left">
+        <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-16 py-20 md:py-32 gap-8">
+          <div className="flex-1 w-full space-y-6 text-center md:text-left">
             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
               Me <span className="text-red-500">Play</span>
             </h1>
@@ -33,25 +33,25 @@ function Landing() {
             </NavLink>
           </div>
 
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 w-full flex justify-center">
             <img
               src="/images/boy.jpg"
               alt="hero"
-              className="rounded-2xl shadow-2xl max-w-sm md:max-w-md hover:scale-105 transition-transform duration-500"
+              className="rounded-2xl shadow-2xl max-w-full md:max-w-md hover:scale-105 transition-transform duration-500"
             />
           </div>
         </section>
 
         {/* Info Section */}
         <section className="flex flex-col-reverse md:flex-row items-center justify-between bg-gray-950 px-6 md:px-16 py-16 gap-10">
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 w-full flex justify-center">
             <img
               src="/images/girl.jpg"
               alt="creator"
-              className="rounded-2xl shadow-lg max-w-sm md:max-w-md hover:scale-105 transition-transform duration-500"
+              className="rounded-2xl shadow-lg max-w-full md:max-w-md hover:scale-105 transition-transform duration-500"
             />
           </div>
-          <div className="flex-1 space-y-5 text-center md:text-left">
+          <div className="flex-1 w-full space-y-5 text-center md:text-left">
             <h2 className="text-3xl md:text-4xl font-bold">
               Create. Stream. Inspire.
             </h2>
@@ -67,6 +67,7 @@ function Landing() {
           </div>
         </section>
       </div>
+
     </>
   );
 }

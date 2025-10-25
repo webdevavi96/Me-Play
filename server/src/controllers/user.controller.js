@@ -113,7 +113,9 @@ const LogInUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
     return res
@@ -122,7 +124,7 @@ const LogInUser = asyncHandler(async (req, res) => {
         .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(200, {
-                user: user, accessToken, refreshToken
+                user: user
             },
                 "Log in successfull"
             )
@@ -145,13 +147,15 @@ const logOutUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
     return res
         .status(200)
-        .cookie("accessToken", options)
-        .cookie("refreshToken", options)
+        .cookie("accessToken", "", { ...options, maxAge: 0 })
+        .cookie("refreshToken", "", { ...options, maxAge: 0 })
         .json(new ApiResponse(200, "Log out successfull!"))
 
 });
@@ -161,8 +165,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-
-    if (!incommingRefreshToken) throw new ApiError(401, "Unauthorized request!F");
+    if (!incommingRefreshToken) throw new ApiError(401, "Unauthorized request!");
 
     try {
         const decodedToken = jwt.verify(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
@@ -174,15 +177,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true
+            secure: process.env.NODE_ENV === "production", // true only in production
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         };
+
 
         const { accessToken, newRefreshToken } = await generateAccesssAndRefreshToken(user?._id);
 
         return res
-            .status(200)
-            .cookie("accessToken", accessToken)
-            .cookie("refreshToken", newRefreshToken)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
             .json(new ApiResponse(200, { accessToken, newRefreshToken }, "Access token refreshed"));
 
     } catch (error) {
