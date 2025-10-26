@@ -19,7 +19,7 @@ const videoSchema = new Schema({
         required: true,
     },
     duration: {
-        type: Number,   // Clouudinery url
+        type: String,   // Clouudinery url
         required: true,
     },
     views: {

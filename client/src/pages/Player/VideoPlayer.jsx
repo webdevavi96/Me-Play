@@ -1,30 +1,51 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { postComment, likeVideo } from "../../services/videoServices";
+import { postComment, likeVideo, fetchComments } from "../../services/videoServices";
 import capitalizeName from "../../utils/capitaliseName";
-import { FaThumbsUp, FaRegThumbsUp, FaShareAlt, FaCommentAlt } from "react-icons/fa";
-import { AuthContext } from "../../utils/authContext"
+import { FaThumbsUp, FaRegThumbsUp, FaShareAlt } from "react-icons/fa";
+import { AuthContext } from "../../utils/authContext";
 
 function VideoPlayer() {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+
   const [video, setVideo] = useState(null);
   const [relatedVideos, setRelatedVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [comments, setComments] = useState([]);
+  const [commentCount, setCommentCount] = useState(0);
   const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
 
   useEffect(() => {
     const fetchVideo = async () => {
       try {
+        setLoading(true);
+
+        // Fetch main video details
         const res = await axios.get(`/api/v1/videos/video/${id}`);
         setVideo(res.data.data);
         setLikes(res.data.data.likes || 0);
 
+        // Fetch first page of comments
+        const commentData = await fetchComments(id, 1);
+        if (commentData) {
+          setComments(commentData.comments || []);
+          setCommentCount(commentData.totalComments || 0);
+          setPage(1);
+          setHasMore(
+            commentData.comments?.length >= 10 &&
+            commentData.totalComments > commentData.comments.length
+          );
+        }
+
+        // Fetch related videos
         const related = await axios.get(`/api/v1/videos`);
         setRelatedVideos(related.data.data || []);
       } catch (err) {
@@ -33,6 +54,7 @@ function VideoPlayer() {
         setLoading(false);
       }
     };
+
     fetchVideo();
   }, [id]);
 
@@ -55,8 +77,6 @@ function VideoPlayer() {
     }
   };
 
-
-
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -69,29 +89,57 @@ function VideoPlayer() {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
     try {
       const status = await postComment(commentText, id);
-      console.log(status)
-      console.log(user)
-      if (status == 200 || status == "success") {
-        const newComment = {
-          id: Date.now(),
-          text: commentText,
-          user: capitalizeName(user?.fullName),
-          createdAt: new Date().toISOString(),
-        };
-
-        setComments([newComment, ...comments]);
+      if (status === 200 || status === "success") {
         setCommentText("");
+
+        // Reload first page of comments after posting
+        const updated = await fetchComments(id, 1);
+        if (updated) {
+          setComments(updated.comments || []);
+          setCommentCount(updated.totalComments || 0);
+          setPage(1);
+          setHasMore(
+            updated.comments?.length >= 10 &&
+            updated.totalComments > updated.comments.length
+          );
+        }
       } else {
-        console.error(status)
-        alert("Unable to post comment")
+        console.error(status);
+        alert("Unable to post comment");
       }
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   };
+
+  const loadMoreComments = async () => {
+    if (!hasMore) return;
+    try {
+      setLoadingComments(true);
+      const nextPage = page + 1;
+      const commentData = await fetchComments(id, nextPage);
+      if (commentData?.comments?.length) {
+        setComments((prev) => [...prev, ...commentData.comments]);
+        setPage(nextPage);
+        setHasMore(commentData.totalComments > comments.length + commentData.comments.length);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error("Failed to load more comments", err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const formatDate = (date) =>
+    new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
 
   if (loading)
     return <p className="text-center text-gray-500 mt-10">Loading video...</p>;
@@ -101,13 +149,6 @@ function VideoPlayer() {
 
   const { videoFile, title, publisher, views, createdAt, description } = video;
 
-  const formatDate = (date) =>
-    new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-
   return (
     <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 p-4 bg-linear-to-br from-gray-900 via-black to-gray-950 min-h-screen">
       {/* ---------- LEFT: Main Video Section ---------- */}
@@ -115,7 +156,7 @@ function VideoPlayer() {
         {/* Video Player */}
         <div className="bg-black rounded-xl overflow-hidden shadow-lg">
           <video
-            className="w-full aspect-video object-cover"
+            className="w-full aspect-video object-contain"
             src={videoFile}
             controls
             autoPlay
@@ -144,7 +185,6 @@ function VideoPlayer() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Like Button */}
             <button
               onClick={handleLike}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition"
@@ -152,7 +192,6 @@ function VideoPlayer() {
               {liked ? <FaThumbsUp /> : <FaRegThumbsUp />} {likes}
             </button>
 
-            {/* Share Button */}
             <button
               onClick={handleShare}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition"
@@ -160,7 +199,6 @@ function VideoPlayer() {
               <FaShareAlt /> Share
             </button>
 
-            {/* Subscribe Button */}
             <button className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-full text-sm transition">
               Subscribe
             </button>
@@ -177,9 +215,10 @@ function VideoPlayer() {
         {/* ---------- COMMENTS SECTION ---------- */}
         <div className="mt-6">
           <h3 className="text-lg font-semibold text-gray-200 mb-3">
-            Comments ({comments.length})
+            Comments ({commentCount})
           </h3>
 
+          {/* Comment Input */}
           <form
             onSubmit={handleCommentSubmit}
             className="flex gap-3 mb-4 items-center"
@@ -199,24 +238,47 @@ function VideoPlayer() {
             </button>
           </form>
 
-          <div className="space-y-3">
+          {/* Comments List */}
+          <div className="space-y-3 overflow-clip">
             {comments.length > 0 ? (
               comments.map((c) => (
                 <div
-                  key={c.id}
-                  className="bg-gray-800 p-3 rounded-lg text-gray-200"
+                  key={c._id}
+                  className="flex gap-3 bg-gray-800 p-3 rounded-lg text-gray-200"
                 >
-                  <p className="font-semibold">{c.user}</p>
-                  <p className="text-sm">{c.text}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDate(c.createdAt)}
-                  </p>
+                  <img
+                    src={c.ownerDetails?.avatar || "/images/default-avatar.jpg"}
+                    alt={c.ownerDetails?.fullName || "User"}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold">
+                      {capitalizeName(c.ownerDetails?.fullName || "Unknown")}
+                    </p>
+                    <p className="text-sm">{c.content}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatDate(c.createdAt)}
+                    </p>
+                  </div>
                 </div>
               ))
             ) : (
               <p className="text-gray-400 text-sm">No comments yet.</p>
             )}
           </div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={loadMoreComments}
+                disabled={loadingComments}
+                className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                {loadingComments ? "Loading..." : "Load More Comments"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { getChannelStats, getChannelVideos } from "../controllers/dashboard.cont
 
 const router = Router();
 
-router.route("/channel-stats/:userId").get(
+router.route("/channel-stats").get(
     verifyJWT,
     getChannelStats
 );

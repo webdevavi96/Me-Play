@@ -49,6 +49,25 @@ const postComment = async (comment, videoId) => {
     }
 }
 
+const fetchComments = async (videoId, page = 1, limit = 10) => {
+    try {
+        const params = {
+            videoId,
+            query: ".*",
+            page,
+            limit,
+        };
+        const res = await axios.get("/api/v1/comments/all-comments", { params });
+        return res?.data?.data;
+    } catch (err) {
+        console.error("Error fetching comments:", err);
+        return null;
+    }
+};
+
+export default fetchComments;
+
+
 const likeVideo = async (videoId) => {
     try {
         const res = await axios.post(`/api/v1/like/toggle-like/${videoId}`, { withCredentials: true });
@@ -58,4 +77,4 @@ const likeVideo = async (videoId) => {
     }
 }
 
-export { fetchVideos, watchVideo, postComment, likeVideo };
+export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments };

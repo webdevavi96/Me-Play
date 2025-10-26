@@ -3,8 +3,22 @@ import React from "react";
 // helper to format duration like "2:35"
 const formatDuration = (seconds) => {
     if (!seconds) return "00:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
+
+    // if stored like "00:15" or "1:23"
+    if (typeof seconds === "string" && seconds.includes(":")) {
+        const parts = seconds.split(":").map(Number);
+        if (parts.length === 2) {
+            const [mins, secs] = parts;
+            return `${mins}:${secs.toString().padStart(2, "0")}`;
+        }
+    }
+
+    // if stored like "15" (string) or 15 (number)
+    const secondsNum = parseInt(seconds, 10);
+    if (isNaN(secondsNum)) return "00:00";
+
+    const mins = Math.floor(secondsNum / 60);
+    const secs = Math.floor(secondsNum % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
