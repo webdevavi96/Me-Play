@@ -8,7 +8,7 @@ router.route("/subscribe/:channelId").post(
     verifyJWT,
     toggleSubscription
 );
-router.route("/subscribers-list/:channelId").post(
+router.route("/subscribers-list/:channelId").get(
     verifyJWT,
     getUserChannelSubscribers
 );

@@ -1,41 +1,76 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../utils/authContext";
-import capitliseName from "../../utils/capitaliseName";
-import { channelVideos, fetchChannelStatus, fetchLikedVideos } from "../../services/dashBoardServices";
+import { useNavigate } from "react-router-dom";
+import capitalizeName from "../../utils/capitaliseName";
+import {
+  channelVideos,
+  fetchChannelStatus,
+  fetchLikedVideos,
+  fetchSubscribers,
+} from "../../services/dashBoardServices";
+import axios from "axios";
+import { Loader } from "../../components/components";
 
 function Dashboard() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const [activeSection, setActiveSection] = useState("history");
   const [uploads, setUploads] = useState([]);
   const [watchHistory, setWatchHistory] = useState([]);
   const [uploadsCount, setUploadsCount] = useState(0);
-  const [subscribers, setSubscribers] = useState(0);
+  const [subscribersCount, setSubscribersCount] = useState(0);
   const [subscribed, setSubscribed] = useState(0);
   const [likedVideos, setLikedVideos] = useState([]);
-  const [likedVideosCount, setLikedVideosCount] = useState([]);
+  const [likedVideosCount, setLikedVideosCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
+  // ✅ Fetch all dashboard data
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+
+        // Fetch uploaded videos
         const res = await channelVideos();
         setUploads(res || []);
 
-        const channelStats = await fetchChannelStatus()
+        // Fetch stats
+        const channelStats = await fetchChannelStatus();
         setUploadsCount(channelStats.totalVideos || 0);
-        setSubscribers(channelStats.subscribersCount || 0);
         setSubscribed(channelStats.subscribedChannelsCount || 0);
-        setWatchHistory(channelStats.watchHistory || []);
 
-        const liked = await fetchLikedVideos()
-        setLikedVideos(liked.videos)
-        setLikedVideosCount(liked.totalLiked)
-        console.log(liked)
+        // Fetch history
+        const historyRes = await axios.get("/api/v1/users/history");
+        setWatchHistory(historyRes.data?.data || []);
+
+        // Fetch liked videos
+        const likedRes = await fetchLikedVideos();
+        setLikedVideos(likedRes?.videos || []);
+        setLikedVideosCount(likedRes?.totalLiked || 0);
+
+        // Fetch subscribers
+        if (user?._id) {
+          const subsRes = await fetchSubscribers(user._id);
+          setSubscribersCount(subsRes?.subscriberCount || 0);
+        }
       } catch (err) {
         console.error("Error fetching user details:", err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+
+    if (user) fetchData();
+  }, [user]);
+
+  // ✅ Navigate to video page
+  const handleVideoClick = (videoId) => {
+    navigate(`/watch/${videoId}`);
+  };
+
+  // ✅ Loader while fetching data
+  if (loading) return <Loader />;
 
   return (
     <div className="max-w-[1200px] mx-auto p-4 space-y-6 text-white">
@@ -43,7 +78,11 @@ function Dashboard() {
       <div className="bg-gray-900 rounded-xl overflow-hidden shadow-lg">
         <div className="h-40 bg-gray-800">
           {user?.banner && (
-            <img src={user.banner} alt="Banner" className="w-full h-full object-cover" />
+            <img
+              src={user.banner}
+              alt="Banner"
+              className="w-full h-full object-cover"
+            />
           )}
         </div>
         <div className="flex flex-col md:flex-row items-center md:items-start p-6 gap-6">
@@ -53,12 +92,14 @@ function Dashboard() {
             className="w-24 h-24 rounded-full border-4 border-gray-900 object-cover -mt-12 md:mt-0"
           />
           <div className="flex-1">
-            <h2 className="text-2xl font-semibold">{capitliseName(user?.fullName) || "Unknown User"}</h2>
+            <h2 className="text-2xl font-semibold">
+              {capitalizeName(user?.fullName) || "Unknown User"}
+            </h2>
             <p className="text-gray-300">@{user?.username || "username"}</p>
 
             <div className="flex gap-6 mt-4">
               <div>
-                <p className="text-white font-semibold">{subscribers}</p>
+                <p className="text-white font-semibold">{subscribersCount}</p>
                 <p className="text-gray-400 text-sm">Subscribers</p>
               </div>
               <div>
@@ -70,90 +111,52 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* ---------- WATCH HISTORY / UPLOADS TABS ---------- */}
+      {/* ---------- WATCH HISTORY / UPLOADS / LIKED ---------- */}
       <div className="bg-gray-900 rounded-xl p-4 shadow-lg space-y-4">
         {/* Tabs */}
         <div className="flex gap-4 border-b border-gray-700">
-          <button
-            className={`px-4 py-2 ${activeSection === "history"
-              ? "border-b-2 border-blue-500 font-semibold"
-              : "text-gray-400"
+          {["history", "uploads", "liked"].map((tab) => (
+            <button
+              key={tab}
+              className={`px-4 py-2 ${
+                activeSection === tab
+                  ? "border-b-2 border-blue-500 font-semibold"
+                  : "text-gray-400"
               }`}
-            onClick={() => setActiveSection("history")}
-          >
-            Watch History
-          </button>
-          <button
-            className={`px-4 py-2 ${activeSection === "uploads"
-              ? "border-b-2 border-blue-500 font-semibold"
-              : "text-gray-400"
-              }`}
-            onClick={() => setActiveSection("uploads")}
-          >
-            Uploads
-          </button>
-          <button
-            className={`px-4 py-2 ${activeSection === "liked"
-              ? "border-b-2 border-blue-500 font-semibold"
-              : "text-gray-400"
-              }`}
-            onClick={() => setActiveSection("liked")}
-          >
-            Liked Videos
-          </button>
+              onClick={() => setActiveSection(tab)}
+            >
+              {tab === "history"
+                ? "Watch History"
+                : tab === "uploads"
+                ? "Uploads"
+                : "Liked Videos"}
+            </button>
+          ))}
         </div>
 
-        {/* Section Content */}
+        {/* ---------- Section Content ---------- */}
         {activeSection === "history" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-            {watchHistory.length > 0 ? (
-              watchHistory.map((video) => (
-                <div key={video.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
-                  <img src={video.thumbnail} alt={video.title} className="w-full h-32 object-cover" />
-                  <p className="text-white p-2 text-sm">{video.title}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-400 col-span-full text-center">No watch history yet.</p>
-            )}
-          </div>
+          <VideoGrid
+            title="Watch History"
+            videos={watchHistory}
+            onClick={handleVideoClick}
+          />
         )}
 
         {activeSection === "uploads" && (
-          <div className="space-y-4 mt-4">
-            <h3 className="text-white font-semibold">Total Uploads: {uploadsCount}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {uploads.length > 0 ? (
-                uploads.map((video) => (
-                  <div key={video.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
-                    <img src={video.thumbnail} alt={video.title} className="w-full h-32 object-cover" />
-                    <p className="text-white p-2 text-sm">{video.title}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 col-span-full text-center">No uploads yet.</p>
-              )}
-            </div>
-          </div>
+          <VideoGrid
+            title={`Total Uploads: ${uploadsCount}`}
+            videos={uploads}
+            onClick={handleVideoClick}
+          />
         )}
 
-        {/*History section*/}
         {activeSection === "liked" && (
-          <div className="space-y-4 mt-4">
-            <h3 className="text-white font-semibold">Liked Videos: {likedVideosCount}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {likedVideos.length > 0 ? (
-                likedVideos.map((video) => (
-                  <div key={video.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
-                    <img src={video.thumbnail} alt={video.title} className="w-full h-32 object-cover" />
-                    <p className="text-white p-2 text-sm">{video.title}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 col-span-full text-center">No uploads yet.</p>
-              )}
-            </div>
-          </div>
+          <VideoGrid
+            title={`Liked Videos: ${likedVideosCount}`}
+            videos={likedVideos}
+            onClick={handleVideoClick}
+          />
         )}
       </div>
     </div>
@@ -161,3 +164,34 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
+// ✅ Reusable video grid component
+function VideoGrid({ title, videos, onClick }) {
+  return (
+    <div className="space-y-4 mt-4">
+      {title && <h3 className="text-white font-semibold">{title}</h3>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {videos.length > 0 ? (
+          videos.map((video) => (
+            <div
+              key={video._id || video.id}
+              className="bg-gray-800 rounded-lg overflow-hidden shadow hover:scale-[1.02] transition-transform cursor-pointer"
+              onClick={() => onClick(video._id || video.id)}
+            >
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="w-full h-32 object-cover"
+              />
+              <p className="text-white p-2 text-sm truncate">{video.title}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-400 col-span-full text-center">
+            No videos available.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}

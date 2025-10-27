@@ -20,13 +20,24 @@ const fetchChannelStatus = async () => {
 };
 
 const fetchLikedVideos = async () => {
-   try {
-     const res = await axios.get("/api/v1/like/liked/videos");
-     return res.data.data
-   } catch (error) {
-    console.log(error)
-    return error
-   }
+    try {
+        const res = await axios.get("/api/v1/like/liked/videos");
+        return res.data.data
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+};
+
+
+const fetchSubscribers = async (channelId) => {
+    try {
+        const res = await axios.get(`/api/v1/channels/subscribers-list/${channelId}`);
+        return res.data.data;
+    } catch (error) {
+        console.log(error)
+        return error
+    }
 }
 
-export { channelVideos, fetchChannelStatus, fetchLikedVideos }
+export { channelVideos, fetchChannelStatus, fetchLikedVideos, fetchSubscribers }

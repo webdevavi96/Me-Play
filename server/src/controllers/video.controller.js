@@ -363,6 +363,38 @@ const getAllUsersVideos = asyncHandler(async (req, res) => {
 
 });
 
+const addToWatchHistory = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    if (!mongoose.isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video ID");
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) throw new ApiError(404, "Video not found");
+
+    const user = await User.findById(req.user._id);
+
+    // ✅ Avoid duplicates in history
+    const alreadyWatched = user.watchHistory.some(
+        (vId) => vId.toString() === videoId
+    );
+
+    if (!alreadyWatched) {
+        user.watchHistory.unshift(videoId); // Add to front (most recent first)
+
+        // Keep only last 50 watched videos
+        if (user.watchHistory.length > 50) {
+            user.watchHistory = user.watchHistory.slice(0, 50);
+        }
+
+        await user.save();
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, user.watchHistory, "Watch history updated successfully")
+    );
+});
+
 export {
     getAllVideos,
     publishAVideo,
@@ -370,5 +402,6 @@ export {
     updateVideo,
     deleteVideo,
     togglePublishStatus,
-    getAllUsersVideos
+    getAllUsersVideos,
+    addToWatchHistory
 }

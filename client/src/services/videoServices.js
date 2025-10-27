@@ -113,4 +113,15 @@ const subscribeChannel = async (channelId) => {
     }
 };
 
-export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments, fetchAllVideos, subscribeChannel };
+const addToWatchHistory = async (videoId) => {
+    try {
+        console.log(videoId)
+       const res = await axios.post(`/api/v1/videos/watched/${videoId}`);
+       console.log(res)
+    } catch (err) {
+        console.error("Failed to update watch history", err);
+    }
+};
+
+
+export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments, fetchAllVideos, subscribeChannel, addToWatchHistory };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { postComment, likeVideo, fetchComments, subscribeChannel } from "../../services/videoServices";
+import { postComment, likeVideo, fetchComments, subscribeChannel, addToWatchHistory } from "../../services/videoServices";
 import capitalizeName from "../../utils/capitaliseName";
 import { FaThumbsUp, FaRegThumbsUp, FaShareAlt } from "react-icons/fa";
 import { AuthContext } from "../../utils/authContext";
@@ -56,10 +56,12 @@ function VideoPlayer() {
           );
           setSubscriptionStatus(subRes.data?.isSubscribed || false);
         }
+        if (id) addToWatchHistory(id);
 
         // 4️⃣ Fetch related videos
-        const related = await axios.get(`/api/v1/videos`);
-        setRelatedVideos(related.data.data || []);
+        // const related = await axios.get(`/api/v1/videos`);
+        // setRelatedVideos(related.data.data || []);
+
       } catch (err) {
         console.error("Failed to fetch video", err);
       } finally {
@@ -153,10 +155,8 @@ function VideoPlayer() {
       if (!channelId) return;
 
       const res = await subscribeChannel(channelId);
-      console.log(res)
       if (res.statusCode === 200 || res.data?.success) {
         setSubscriptionStatus((prev) => !prev);
-        console.log("done")
       }
     } catch (err) {
       console.error("Subscription failed:", err);
