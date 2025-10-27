@@ -11,7 +11,6 @@ const Login = lazy(() => import("../pages/AuthPages/Login/Login"));
 const Settings = lazy(() => import("../pages/Settings/Settings"));
 const Dashboard = lazy(() => import("../pages/Dashboard/Dasboard"));
 const Register = lazy(() => import("../pages/AuthPages/Register/Register"));
-const History = lazy(() => import("../pages/History/History"));
 const Login_Required = lazy(() => import("../pages/Login_Required/Login_Required"));
 const VideoPlayer = lazy(() => import("../pages/Player/VideoPlayer"));
 const UploadVideo = lazy(() => import("../pages/upload/UploadVideo"));
@@ -31,11 +30,10 @@ const router = createBrowserRouter([
             { path: 'login_required', element: <Suspense fallback={<Loader />}><Login_Required /></Suspense> },
 
             { path: 'home', element: <ProtectedRoutes><Suspense fallback={<Loader />}><Home /></Suspense></ProtectedRoutes> },
-            { path: 'history', element: <ProtectedRoutes><Suspense fallback={<Loader />}><History /></Suspense></ProtectedRoutes> },
             { path: 'dashboard', element: <ProtectedRoutes><Suspense fallback={<Loader />}><Dashboard /></Suspense></ProtectedRoutes> },
             { path: 'settings', element: <ProtectedRoutes><Suspense fallback={<Loader />}><Settings /></Suspense></ProtectedRoutes> },
             { path: "/watch/:id", element: <ProtectedRoutes><Suspense fallback={<Loader />}><VideoPlayer /></Suspense></ProtectedRoutes> },
-            { path: "/upload/video", element: <ProtectedRoutes><Suspense fallback={<Loader />}><UploadVideo /></Suspense></ProtectedRoutes> },
+            { path: "/upload", element: <ProtectedRoutes><Suspense fallback={<Loader />}><UploadVideo /></Suspense></ProtectedRoutes> },
         ]
     }
 ]);

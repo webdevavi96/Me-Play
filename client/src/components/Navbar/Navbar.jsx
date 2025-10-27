@@ -48,7 +48,7 @@ function Navbar() {
               <MdSpaceDashboard size={18} /> Dashboard
             </NavLink>
             <NavLink
-              to="/upload/video"
+              to="/upload"
               className="flex items-center gap-2 hover:text-red-400 min-w-0"
             >
               <IoCloudUpload size={18} /> Upload

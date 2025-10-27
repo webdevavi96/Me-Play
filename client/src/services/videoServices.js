@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const message = "Something went wront! Please try after sometime";
+
 const fetchVideos = async () => {
     try {
         const storedUser = localStorage.getItem("user");
@@ -23,7 +25,8 @@ const fetchVideos = async () => {
         return videos;
     } catch (error) {
         console.error("Error fetching videos:", error);
-        return [];
+        return message
+
     }
 };
 
@@ -35,7 +38,8 @@ const watchVideo = async (videoId) => {
         return video;
     } catch (error) {
         console.log("video not found");
-        return [];
+        return message
+
     }
 };
 
@@ -45,7 +49,8 @@ const postComment = async (comment, videoId) => {
         return res?.status;
     } catch (error) {
         console.error(error)
-        return error
+        return message
+
     }
 }
 
@@ -61,7 +66,8 @@ const fetchComments = async (videoId, page = 1, limit = 10) => {
         return res?.data?.data;
     } catch (err) {
         console.error("Error fetching comments:", err);
-        return null;
+        return message
+
     }
 };
 
@@ -74,7 +80,37 @@ const likeVideo = async (videoId) => {
         return res.status;
     } catch (error) {
         console.error(error)
+        return message
     }
 }
 
-export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments };
+
+const fetchAllVideos = async () => {
+    try {
+        const params = {
+            query: ".*",
+            sortBy: "createdAt",
+            sortType: "desc",
+            page: 1,
+            limit: 10
+        };
+        const response = await axios.get("/api/v1/videos/videos", { params });
+        const videos = response.data?.data;
+        return videos;
+    } catch (error) {
+        console.log(error)
+        return message
+    }
+};
+
+const subscribeChannel = async (channelId) => {
+    try {
+        const res = await axios.post(`/api/v1/channels/subscribe/${channelId}`, {}, { withCredentials: true });
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        return message
+    }
+};
+
+export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments, fetchAllVideos, subscribeChannel };

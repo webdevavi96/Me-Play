@@ -11,7 +11,7 @@ const channelVideos = async () => {
 
 const fetchChannelStatus = async () => {
     try {
-        const res = await axios.get("/api/v1/user/dashboard/channel-stats"); 
+        const res = await axios.get("/api/v1/user/dashboard/channel-stats");
         return res.data.data;
     } catch (err) {
         console.error(err);
@@ -19,4 +19,14 @@ const fetchChannelStatus = async () => {
     }
 };
 
-export { channelVideos, fetchChannelStatus }
+const fetchLikedVideos = async () => {
+   try {
+     const res = await axios.get("/api/v1/like/liked/videos");
+     return res.data.data
+   } catch (error) {
+    console.log(error)
+    return error
+   }
+}
+
+export { channelVideos, fetchChannelStatus, fetchLikedVideos }

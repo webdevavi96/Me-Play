@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import VideoCard from "../../components/Cards/VideoCards";
-import { fetchVideos } from "../../services/videoServices";
+import { fetchVideos, fetchAllVideos } from "../../services/videoServices";
 
 function Home() {
   const [videoList, setVideoList] = useState([]);
@@ -11,7 +11,7 @@ function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const videos = await fetchVideos();
+        const videos = await fetchAllVideos();
         setVideoList(videos.videos || []);
       } catch (err) {
         console.error("Error fetching videos:", err);

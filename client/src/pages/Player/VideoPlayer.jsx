@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { postComment, likeVideo, fetchComments } from "../../services/videoServices";
+import { postComment, likeVideo, fetchComments, subscribeChannel } from "../../services/videoServices";
 import capitalizeName from "../../utils/capitaliseName";
 import { FaThumbsUp, FaRegThumbsUp, FaShareAlt } from "react-icons/fa";
 import { AuthContext } from "../../utils/authContext";
@@ -22,18 +22,22 @@ function VideoPlayer() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(false);
 
   useEffect(() => {
     const fetchVideo = async () => {
       try {
         setLoading(true);
 
-        // Fetch main video details
+        // 1️⃣ Fetch main video
         const res = await axios.get(`/api/v1/videos/video/${id}`);
-        setVideo(res.data.data);
-        setLikes(res.data.data.likes || 0);
+        const videoData = res.data.data;
+        setVideo(videoData);
 
-        // Fetch first page of comments
+        setLiked(videoData.isLikedByCurrentUser);
+        setLikes(videoData.likesCount);
+
+        // 2️⃣ Fetch comments
         const commentData = await fetchComments(id, 1);
         if (commentData) {
           setComments(commentData.comments || []);
@@ -45,7 +49,15 @@ function VideoPlayer() {
           );
         }
 
-        // Fetch related videos
+        // 3️⃣ Fetch subscription status only after publisher is known
+        if (videoData?.publisher?._id) {
+          const subRes = await axios.get(
+            `/api/v1/channels/subscriber/${videoData.publisher._id}`
+          );
+          setSubscriptionStatus(subRes.data?.isSubscribed || false);
+        }
+
+        // 4️⃣ Fetch related videos
         const related = await axios.get(`/api/v1/videos`);
         setRelatedVideos(related.data.data || []);
       } catch (err) {
@@ -57,6 +69,7 @@ function VideoPlayer() {
 
     fetchVideo();
   }, [id]);
+
 
   const handleLike = async () => {
     try {
@@ -134,6 +147,23 @@ function VideoPlayer() {
     }
   };
 
+  const handleSubscription = async () => {
+    try {
+      const channelId = video?.publisher?._id;
+      if (!channelId) return;
+
+      const res = await subscribeChannel(channelId);
+console.log(res)
+      if (res.statusCode === 200 || res.data?.success) {
+        setSubscriptionStatus((prev) => !prev); 
+        console.log("done")
+      }
+    } catch (err) {
+      console.error("Subscription failed:", err);
+    }
+  };
+
+
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -199,9 +229,13 @@ function VideoPlayer() {
               <FaShareAlt /> Share
             </button>
 
-            <button className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-full text-sm transition">
-              Subscribe
+            <button
+              onClick={handleSubscription}
+              className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-full text-sm transition"
+            >
+              {subscriptionStatus ? "Subscribed" : "Subscribe"}
             </button>
+
           </div>
         </div>
 

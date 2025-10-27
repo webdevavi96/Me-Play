@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../utils/authContext";
 import capitliseName from "../../utils/capitaliseName";
-import { channelVideos, fetchChannelStatus } from "../../services/dashBoardServices";
+import { channelVideos, fetchChannelStatus, fetchLikedVideos } from "../../services/dashBoardServices";
 
 function Dashboard() {
   const { user } = useContext(AuthContext);
@@ -11,18 +11,25 @@ function Dashboard() {
   const [uploadsCount, setUploadsCount] = useState(0);
   const [subscribers, setSubscribers] = useState(0);
   const [subscribed, setSubscribed] = useState(0);
+  const [likedVideos, setLikedVideos] = useState([]);
+  const [likedVideosCount, setLikedVideosCount] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await channelVideos();
         setUploads(res || []);
-        
+
         const channelStats = await fetchChannelStatus()
         setUploadsCount(channelStats.totalVideos || 0);
         setSubscribers(channelStats.subscribersCount || 0);
         setSubscribed(channelStats.subscribedChannelsCount || 0);
         setWatchHistory(channelStats.watchHistory || []);
+
+        const liked = await fetchLikedVideos()
+        setLikedVideos(liked.videos)
+        setLikedVideosCount(liked.totalLiked)
+        console.log(liked)
       } catch (err) {
         console.error("Error fetching user details:", err);
       }
@@ -85,6 +92,15 @@ function Dashboard() {
           >
             Uploads
           </button>
+          <button
+            className={`px-4 py-2 ${activeSection === "liked"
+              ? "border-b-2 border-blue-500 font-semibold"
+              : "text-gray-400"
+              }`}
+            onClick={() => setActiveSection("liked")}
+          >
+            Liked Videos
+          </button>
         </div>
 
         {/* Section Content */}
@@ -109,6 +125,25 @@ function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {uploads.length > 0 ? (
                 uploads.map((video) => (
+                  <div key={video.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
+                    <img src={video.thumbnail} alt={video.title} className="w-full h-32 object-cover" />
+                    <p className="text-white p-2 text-sm">{video.title}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 col-span-full text-center">No uploads yet.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/*History section*/}
+        {activeSection === "liked" && (
+          <div className="space-y-4 mt-4">
+            <h3 className="text-white font-semibold">Liked Videos: {likedVideosCount}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {likedVideos.length > 0 ? (
+                likedVideos.map((video) => (
                   <div key={video.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
                     <img src={video.thumbnail} alt={video.title} className="w-full h-32 object-cover" />
                     <p className="text-white p-2 text-sm">{video.title}</p>
