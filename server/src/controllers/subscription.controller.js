@@ -11,6 +11,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
     if (!isValidObjectId(channelId)) throw new ApiError(400, "Invalid channel id");
 
+
     if (req.user._id.toString() === channelId) {
         throw new ApiError(400, "You cannot subscribe to yourself");
     }
@@ -142,8 +143,56 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
 });
 
 
+
+const isSubscribed = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const { channelId } = req.params;
+
+    if (!channelId) {
+        return res.status(400).json({ message: "Channel ID is required" });
+    }
+
+    const result = await Subscription.aggregate([
+        {
+            $match: {
+                channel: new mongoose.Types.ObjectId(channelId),
+            },
+        },
+        {
+            $group: {
+                _id: "$channel",
+                subscribers: { $push: "$subscriber" },
+            },
+        },
+        {
+            $addFields: {
+                isSubscribed: {
+                    $in: [new mongoose.Types.ObjectId(userId), "$subscribers"],
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                isSubscribed: 1,
+            },
+        },
+    ]);
+
+    const isSubscribed =
+        result.length > 0 ? result[0].isSubscribed : false;
+
+    res.status(200).json({
+        success: true,
+        isSubscribed,
+    });
+});
+
+
+
 export {
     toggleSubscription,
     getUserChannelSubscribers,
-    getSubscribedChannels
+    getSubscribedChannels,
+    isSubscribed
 }

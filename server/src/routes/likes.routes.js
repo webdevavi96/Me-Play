@@ -8,7 +8,7 @@ router.route("/toggle-like/:videoId").post(
     verifyJWT,
     toggleLikeVideo
 );
-router.route("/all-liked-videos").get(
+router.route("/liked/videos").get(
     verifyJWT,
     getAllLikedVideos
 );

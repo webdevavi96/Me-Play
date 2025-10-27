@@ -17,10 +17,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     const match = {};
 
-    if (!userId) throw new ApiError(401, "User id not found");
+    if (!userId) return ApiError(400, "Invalid userId");
     match.publisher = new mongoose.Types.ObjectId(userId);
 
-    if (!query) throw new ApiError(402, "Something went wrong, please try again latter");
+    if (!query) return ApiError(400, "Something went wrong")
     match.$or = [
         { title: { $regex: query, $options: "i" } },
         { description: { $regex: query, $options: "i" } }
@@ -118,6 +118,9 @@ const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const validId = isValidObjectId(videoId);
     if (!validId) throw new ApiError(400, "Invalid Video Id");
+
+    const userId = req.user?._id;
+
     const video = await Video.aggregate([
         {
             $match: { _id: new mongoose.Types.ObjectId(videoId) }
@@ -146,6 +149,40 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "likedTo",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "likes.likedBy",
+                foreignField: "_id",
+                as: "likedByUsers",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            _id: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                isLikedByCurrentUser: userId
+                    ? { $in: [new mongoose.Types.ObjectId(userId), "$likes.likedBy"] }
+                    : false,
+            }
+        },
+        {
             $project: {
                 title: 1,
                 description: 1,
@@ -153,6 +190,8 @@ const getVideoById = asyncHandler(async (req, res) => {
                 videoFile: 1,
                 duration: 1,
                 views: 1,
+                likesCount: 1,
+                isLikedByCurrentUser: 1,
                 createdAt: 1,
                 publisher: 1
             }
@@ -161,6 +200,8 @@ const getVideoById = asyncHandler(async (req, res) => {
     ]);
 
     if (!video.length) throw new ApiError(404, "Video not found");
+
+
 
     return res
         .status(200)
@@ -260,11 +301,74 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 });
 
 
+const getAllUsersVideos = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, query, sortBy, sortType } = req.query;
+    if (!query) return new ApiError(402, "Something went wrong, please try again later");
+
+    const pagenum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pagenum - 1) * limitNum;
+
+    const match = {};
+    match.$or = [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } }
+    ];
+
+    const videos = await Video.aggregate([
+        { $match: match },
+        { $sort: { [sortBy]: sortType == "asc" ? 1 : -1 } },
+        {
+            $lookup: {
+                from: "users",
+                localField: "publisher",
+                foreignField: "_id",
+                as: "publisher"
+            }
+        },
+        { $unwind: "$publisher" },
+        {
+            $project: {
+                title: 1,
+                description: 1,
+                thumbnail: 1,
+                videoFile: 1,
+                duration: 1,
+                views: 1,
+                createdAt: 1,
+                "publisher._id": 1,
+                "publisher.username": 1,
+                "publisher.fullName": 1,
+                "publisher.avatar": 1,
+            }
+        },
+        { $skip: skip },
+        { $limit: limitNum }
+    ]);
+
+    const totalVideos = await Video.countDocuments(match);
+    const totalPages = Math.ceil(totalVideos / limitNum);
+    const data = {
+        videos,
+        pagination: {
+            totalPages,
+            currentPage: pagenum,
+            limit: limitNum
+        }
+    };
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, data, "Videos fetched successfully"))
+
+});
+
 export {
     getAllVideos,
     publishAVideo,
     getVideoById,
     updateVideo,
     deleteVideo,
-    togglePublishStatus
+    togglePublishStatus,
+    getAllUsersVideos
 }

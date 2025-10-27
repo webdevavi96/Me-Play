@@ -1,4 +1,4 @@
-import { deleteVideo, getAllVideos, getVideoById, publishAVideo, togglePublishStatus, updateVideo } from "../controllers/video.controller.js";
+import { deleteVideo, getAllUsersVideos, getAllVideos, getVideoById, publishAVideo, togglePublishStatus, updateVideo } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { Router } from "express";
@@ -31,6 +31,10 @@ router.route("/video-status/:videoId").get(
 router.route("/delete-video/:videoId").get(
     verifyJWT,
     deleteVideo
+);
+router.route("/videos").get(
+    verifyJWT,
+    getAllUsersVideos
 );
 
 export default router;
