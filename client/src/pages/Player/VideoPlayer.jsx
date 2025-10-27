@@ -153,9 +153,9 @@ function VideoPlayer() {
       if (!channelId) return;
 
       const res = await subscribeChannel(channelId);
-console.log(res)
+      console.log(res)
       if (res.statusCode === 200 || res.data?.success) {
-        setSubscriptionStatus((prev) => !prev); 
+        setSubscriptionStatus((prev) => !prev);
         console.log("done")
       }
     } catch (err) {
