@@ -1,3 +1,19 @@
-# This is my first MERN Stack Project
+# Me Play: A full stack You Tube clone Project -
 
-## basic ui desgin:  [Link](<https://www.figma.com/board/lyt9PyjrmwKOQ6HtVCbXeo/Welcome-to-FigJam?node-id=0-1&t=zOjqouVUzUqdL3CP-1>)
+## To run the server
+
+## For front end
+
+```bash
+cd client
+npm i
+npm run dev
+```
+
+## For Back end
+
+```bash
+cd server
+npm i
+npm run dev
+```
