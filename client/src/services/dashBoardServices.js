@@ -38,6 +38,21 @@ const fetchSubscribers = async (channelId) => {
         console.log(error)
         return error
     }
+};
+
+const fetchSubscribedChannels = async (subscriberId) => {
+    try {
+        const res = await axios.get(`/api/v1/channels/subscribed-channels/${subscriberId}`);
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching subscribed channels:", error);
+        throw error;
+    }
+};
+
+const unSubscribe = async (channelId) => {
+    const res = await axios.get(`api/v1/channels/unsubscribe/channel/${channelId}`)
+    return res.data
 }
 
-export { channelVideos, fetchChannelStatus, fetchLikedVideos, fetchSubscribers }
+export { channelVideos, fetchChannelStatus, fetchLikedVideos, fetchSubscribers, fetchSubscribedChannels, unSubscribe }

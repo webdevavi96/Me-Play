@@ -12,13 +12,17 @@ router.route("/subscribers-list/:channelId").get(
     verifyJWT,
     getUserChannelSubscribers
 );
-router.route("/subscribed-channels/:subscriberId").post(
+router.route("/subscribed-channels/:subscriberId").get(
     verifyJWT,
     getSubscribedChannels
 );
 router.route("/subscriber/:channelId").get(
     verifyJWT,
     isSubscribed
+);
+router.route("/unsubscribe/channel/:channelId").get(
+    verifyJWT,
+    toggleSubscription
 )
 
 export default router;

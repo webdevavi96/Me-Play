@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Back from "../../components/Buttons/Back";
 
 function UploadVideo() {
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ function UploadVideo() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-gray-900 text-white rounded-xl shadow-lg mt-8">
+      <Back />
       <h1 className="text-2xl font-semibold mb-6 text-center">
         Upload a New Video
       </h1>
@@ -139,11 +141,10 @@ function UploadVideo() {
           <button
             type="submit"
             disabled={uploading}
-            className={`px-6 py-3 rounded-lg font-medium transition ${
-              uploading
-                ? "bg-gray-700 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className={`px-6 py-3 rounded-lg font-medium transition ${uploading
+              ? "bg-gray-700 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+              }`}
           >
             {uploading ? "Uploading..." : "Upload Video"}
           </button>

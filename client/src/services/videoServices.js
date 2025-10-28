@@ -2,11 +2,17 @@ import axios from "axios";
 
 const message = "Something went wront! Please try after sometime";
 
-const fetchVideos = async () => {
+const fetchVideos = async (id = "") => {
     try {
-        const storedUser = localStorage.getItem("user");
-        const user = storedUser ? JSON.parse(storedUser) : null;
-        const userId = user?._id;
+        let userId = "";
+        if (id === "") {
+            const storedUser = localStorage.getItem("user");
+            const user = storedUser ? JSON.parse(storedUser) : null;
+            userId = user?._id;
+        } else {
+            userId = id;
+        }
+
         const params = {
             userId,
             query: ".*",
@@ -116,12 +122,15 @@ const subscribeChannel = async (channelId) => {
 const addToWatchHistory = async (videoId) => {
     try {
         console.log(videoId)
-       const res = await axios.post(`/api/v1/videos/watched/${videoId}`);
-       console.log(res)
+        const res = await axios.post(`/api/v1/videos/watched/${videoId}`);
     } catch (err) {
         console.error("Failed to update watch history", err);
     }
 };
 
+const deleteVideo = async (videoId) => {
+    const res = await axios.get(`/api/v1/videos/delete/${videoId}`)
+    return res.data
+}
 
-export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments, fetchAllVideos, subscribeChannel, addToWatchHistory };
+export { fetchVideos, watchVideo, postComment, likeVideo, fetchComments, fetchAllVideos, subscribeChannel, addToWatchHistory, deleteVideo };

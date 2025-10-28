@@ -14,6 +14,8 @@ const Register = lazy(() => import("../pages/AuthPages/Register/Register"));
 const Login_Required = lazy(() => import("../pages/Login_Required/Login_Required"));
 const VideoPlayer = lazy(() => import("../pages/Player/VideoPlayer"));
 const UploadVideo = lazy(() => import("../pages/upload/UploadVideo"));
+const Subscriptions = lazy(() => import("../pages/Managers/Subscriptions"))
+const Videos = lazy(() => import("../pages/Managers/Videos"))
 
 const router = createBrowserRouter([
     {
@@ -34,6 +36,8 @@ const router = createBrowserRouter([
             { path: 'settings', element: <ProtectedRoutes><Suspense fallback={<Loader />}><Settings /></Suspense></ProtectedRoutes> },
             { path: "/watch/:id", element: <ProtectedRoutes><Suspense fallback={<Loader />}><VideoPlayer /></Suspense></ProtectedRoutes> },
             { path: "/upload", element: <ProtectedRoutes><Suspense fallback={<Loader />}><UploadVideo /></Suspense></ProtectedRoutes> },
+            { path: "/manage/subscriptions", element: <ProtectedRoutes><Suspense fallback={<Loader />}><Subscriptions /></Suspense></ProtectedRoutes> },
+            { path: "/manage/videos", element: <ProtectedRoutes><Suspense fallback={<Loader />}><Videos /></Suspense></ProtectedRoutes> },
         ]
     }
 ]);

@@ -121,6 +121,8 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     const userId = req.user?._id;
 
+    await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } })
+
     const video = await Video.aggregate([
         {
             $match: { _id: new mongoose.Types.ObjectId(videoId) }
@@ -277,7 +279,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, "Video deleted successfully"));
+        .json(new ApiResponse(200, "success"));
 
 });
 

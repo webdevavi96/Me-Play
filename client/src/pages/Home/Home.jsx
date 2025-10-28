@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import VideoCard from "../../components/Cards/VideoCards";
-import { fetchVideos, fetchAllVideos } from "../../services/videoServices";
+import { fetchAllVideos } from "../../services/videoServices";
 
 function Home() {
   const [videoList, setVideoList] = useState([]);
@@ -24,6 +24,7 @@ function Home() {
   const handleVideoClick = (videoId) => {
     navigate(`/watch/${videoId}`);
   };
+
 
   return (
     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

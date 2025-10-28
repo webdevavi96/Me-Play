@@ -1,20 +1,35 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { AuthContext } from "../../utils/authContext";
 import Logout from "../../components/Buttons/Logout";
 import capitalizeName from "../../utils/capitaliseName";
 import { useNavigate } from "react-router-dom";
+import Back from "../../components/Buttons/Back"
 
 function Settings() {
   const { isAuthenticated, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  if (!isAuthenticated) {
-    navigate("/login");
-    return null;
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
+
+
+  const manageSubs = () => {
+    navigate("/manage/subscriptions")
+  };
+
+  const manageVideos = () => {
+    navigate("/manage/videos")
   }
+
 
   return (
     <div className="max-w-3xl mx-auto mt-10 p-6  bg-gray-900 text-white rounded-xl shadow-lg">
+
+      <Back />
+
       {/* ---------- HEADER ---------- */}
       <h1 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
         Account Settings
@@ -51,29 +66,33 @@ function Settings() {
       <div className="space-y-4">
         <div className="bg-gray-800 rounded-lg p-4 flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-medium">Account Privacy</h3>
+            <h3 className="text-lg font-medium">Manage Videos</h3>
             <p className="text-gray-400 text-sm">
-              Manage your channel visibility and data privacy.
+              Manage your Videos.
             </p>
           </div>
-          <button className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
+          <button
+            onClick={manageVideos}
+            className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition cursor-pointer">
             Manage
           </button>
         </div>
 
         <div className="bg-gray-800 rounded-lg p-4 flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-medium">Notifications</h3>
+            <h3 className="text-lg font-medium">Manage Subscriptions</h3>
             <p className="text-gray-400 text-sm">
-              Control when and how you receive updates.
+              Control subscriptions or unsubscribe channels.
             </p>
           </div>
-          <button className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
-            Configure
+          <button
+            onClick={manageSubs}
+            className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition cursor-pointer">
+            Manage
           </button>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-4 flex justify-between items-center">
+        {/* <div className="bg-gray-800 rounded-lg p-4 flex justify-between items-center">
           <div>
             <h3 className="text-lg font-medium">Appearance</h3>
             <p className="text-gray-400 text-sm">
@@ -83,7 +102,7 @@ function Settings() {
           <button className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
             Customize
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* ---------- LOGOUT ---------- */}

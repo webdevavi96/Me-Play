@@ -1,10 +1,17 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { postComment, likeVideo, fetchComments, subscribeChannel, addToWatchHistory } from "../../services/videoServices";
+import {
+  postComment,
+  likeVideo,
+  fetchComments,
+  subscribeChannel,
+  addToWatchHistory,
+} from "../../services/videoServices";
 import capitalizeName from "../../utils/capitaliseName";
 import { FaThumbsUp, FaRegThumbsUp, FaShareAlt } from "react-icons/fa";
 import { AuthContext } from "../../utils/authContext";
+import Back from "../../components/Buttons/Back";
 
 function VideoPlayer() {
   const { id } = useParams();
@@ -28,40 +35,30 @@ function VideoPlayer() {
     const fetchVideo = async () => {
       try {
         setLoading(true);
-
-        // 1️⃣ Fetch main video
         const res = await axios.get(`/api/v1/videos/video/${id}`);
         const videoData = res.data.data;
         setVideo(videoData);
-
         setLiked(videoData.isLikedByCurrentUser);
         setLikes(videoData.likesCount);
 
-        // 2️⃣ Fetch comments
         const commentData = await fetchComments(id, 1);
         if (commentData) {
           setComments(commentData.comments || []);
           setCommentCount(commentData.totalComments || 0);
-          setPage(1);
           setHasMore(
             commentData.comments?.length >= 10 &&
             commentData.totalComments > commentData.comments.length
           );
         }
 
-        // 3️⃣ Fetch subscription status only after publisher is known
         if (videoData?.publisher?._id) {
           const subRes = await axios.get(
             `/api/v1/channels/subscriber/${videoData.publisher._id}`
           );
           setSubscriptionStatus(subRes.data?.isSubscribed || false);
         }
+
         if (id) addToWatchHistory(id);
-
-        // 4️⃣ Fetch related videos
-        // const related = await axios.get(`/api/v1/videos`);
-        // setRelatedVideos(related.data.data || []);
-
       } catch (err) {
         console.error("Failed to fetch video", err);
       } finally {
@@ -72,22 +69,14 @@ function VideoPlayer() {
     fetchVideo();
   }, [id]);
 
-
   const handleLike = async () => {
     try {
       const status = await likeVideo(id);
       if (status === 200 || status === "success") {
-        if (liked) {
-          setLikes((prev) => prev - 1);
-          setLiked(false);
-        } else {
-          setLikes((prev) => prev + 1);
-          setLiked(true);
-        }
-      } else {
-        console.error("Failed to like video", status);
+        setLiked((prev) => !prev);
+        setLikes((prev) => prev + (liked ? -1 : 1));
       }
-    } catch (err) {
+    } catch {
       alert("Failed to like video");
     }
   };
@@ -108,21 +97,15 @@ function VideoPlayer() {
       const status = await postComment(commentText, id);
       if (status === 200 || status === "success") {
         setCommentText("");
-
-        // Reload first page of comments after posting
         const updated = await fetchComments(id, 1);
         if (updated) {
           setComments(updated.comments || []);
           setCommentCount(updated.totalComments || 0);
-          setPage(1);
           setHasMore(
             updated.comments?.length >= 10 &&
             updated.totalComments > updated.comments.length
           );
         }
-      } else {
-        console.error(status);
-        alert("Unable to post comment");
       }
     } catch (error) {
       console.error(error);
@@ -138,7 +121,10 @@ function VideoPlayer() {
       if (commentData?.comments?.length) {
         setComments((prev) => [...prev, ...commentData.comments]);
         setPage(nextPage);
-        setHasMore(commentData.totalComments > comments.length + commentData.comments.length);
+        setHasMore(
+          commentData.totalComments >
+          comments.length + commentData.comments.length
+        );
       } else {
         setHasMore(false);
       }
@@ -163,7 +149,6 @@ function VideoPlayer() {
     }
   };
 
-
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -173,183 +158,181 @@ function VideoPlayer() {
 
   if (loading)
     return <p className="text-center text-gray-500 mt-10">Loading video...</p>;
-
   if (!video)
     return <p className="text-center text-gray-500 mt-10">Video not found</p>;
 
   const { videoFile, title, publisher, views, createdAt, description } = video;
 
   return (
-    <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 p-4 bg-linear-to-br from-gray-900 via-black to-gray-950 min-h-screen">
-      {/* ---------- LEFT: Main Video Section ---------- */}
-      <div className="flex-1 lg:w-[65%]">
-        {/* Video Player */}
-        <div className="bg-black rounded-xl overflow-hidden shadow-lg">
-          <video
-            className="w-full aspect-video object-contain"
-            src={videoFile}
-            controls
-            autoPlay
-          />
-        </div>
+    <div className="max-w-[1400px] mx-auto p-4 bg-linear-to-br from-gray-900 via-black to-gray-950 min-h-screen text-white">
+      {/* Back button fixed at top-left */}
+      <div className="mb-4">
+        <Back />
+      </div>
 
-        {/* Video Title */}
-        <h1 className="text-2xl font-semibold mt-3 text-white">{title}</h1>
-
-        {/* Channel Info + Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-4 mt-3 gap-3">
-          <div className="flex items-center gap-3">
-            <img
-              src={publisher?.avatar || "/images/default-avatar.jpg"}
-              alt="Channel Avatar"
-              className="w-12 h-12 rounded-full object-cover border"
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* ---------- LEFT: Main Video Section ---------- */}
+        <div className="flex-1 lg:w-[65%]">
+          <div className="bg-black rounded-xl overflow-hidden shadow-lg">
+            <video
+              className="w-full aspect-video object-contain"
+              src={videoFile}
+              controls
+              autoPlay
             />
-            <div>
-              <h2 className="font-medium text-gray-200 capitalize">
-                {publisher?.fullName || "Uploader"}
-              </h2>
-              <p className="text-sm text-gray-400">
-                {views || 0} views • {formatDate(createdAt)}
-              </p>
+          </div>
+
+          <h1 className="text-2xl font-semibold mt-3">{title}</h1>
+
+          {/* Channel Info + Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-4 mt-3 gap-3">
+            <div className="flex items-center gap-3">
+              <img
+                src={publisher?.avatar || "/images/default-avatar.jpg"}
+                alt="Channel Avatar"
+                className="w-12 h-12 rounded-full object-cover border"
+              />
+              <div>
+                <h2 className="font-medium capitalize">
+                  {publisher?.fullName || "Uploader"}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {views || 0} views • {formatDate(createdAt)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleLike}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 transition"
+              >
+                {liked ? <FaThumbsUp /> : <FaRegThumbsUp />} {likes}
+              </button>
+
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 transition"
+              >
+                <FaShareAlt /> Share
+              </button>
+
+              <button
+                onClick={handleSubscription}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 font-medium rounded-full text-sm transition"
+              >
+                {subscriptionStatus ? "Subscribed" : "Subscribe"}
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleLike}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition"
-            >
-              {liked ? <FaThumbsUp /> : <FaRegThumbsUp />} {likes}
-            </button>
+          {/* Description */}
+          <div className="mt-4 bg-gray-900 border border-gray-800 p-4 rounded-xl">
+            <p className="whitespace-pre-line text-sm leading-relaxed">
+              {description || "No description available."}
+            </p>
+          </div>
 
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition"
-            >
-              <FaShareAlt /> Share
-            </button>
+          {/* ---------- COMMENTS SECTION ---------- */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-3">
+              Comments ({commentCount})
+            </h3>
 
-            <button
-              onClick={handleSubscription}
-              className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-full text-sm transition"
+            <form
+              onSubmit={handleCommentSubmit}
+              className="flex gap-3 mb-4 items-center"
             >
-              {subscriptionStatus ? "Subscribed" : "Subscribe"}
-            </button>
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Add a comment..."
+                className="flex-1 px-4 py-2 rounded-full bg-gray-800 border border-gray-700 focus:outline-none focus:ring focus:ring-gray-600"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-full transition"
+              >
+                Post
+              </button>
+            </form>
 
+            <div className="space-y-3">
+              {comments.length > 0 ? (
+                comments.map((c) => (
+                  <div
+                    key={c._id}
+                    className="flex gap-3 bg-gray-800 p-3 rounded-lg"
+                  >
+                    <img
+                      src={c.ownerDetails?.avatar || "/images/default-avatar.jpg"}
+                      alt={c.ownerDetails?.fullName || "User"}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-semibold">
+                        {capitalizeName(c.ownerDetails?.fullName || "Unknown")}
+                      </p>
+                      <p className="text-sm">{c.content}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatDate(c.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-sm">No comments yet.</p>
+              )}
+            </div>
+
+            {hasMore && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={loadMoreComments}
+                  disabled={loadingComments}
+                  className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg disabled:opacity-50"
+                >
+                  {loadingComments ? "Loading..." : "Load More Comments"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Description */}
-        <div className="mt-4 bg-gray-900 border border-gray-800 p-4 rounded-xl text-white">
-          <p className="whitespace-pre-line text-sm leading-relaxed">
-            {description || "No description available."}
-          </p>
-        </div>
+        {/* ---------- RIGHT: Related Videos ---------- */}
+        <div className="lg:w-[30%] w-full h-fit lg:max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
+          <h3 className="text-lg font-semibold mb-3">Related Videos</h3>
 
-        {/* ---------- COMMENTS SECTION ---------- */}
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold text-gray-200 mb-3">
-            Comments ({commentCount})
-          </h3>
-
-          {/* Comment Input */}
-          <form
-            onSubmit={handleCommentSubmit}
-            className="flex gap-3 mb-4 items-center"
-          >
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1 px-4 py-2 rounded-full bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring focus:ring-gray-600"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition"
-            >
-              Post
-            </button>
-          </form>
-
-          {/* Comments List */}
-          <div className="space-y-3 overflow-clip">
-            {comments.length > 0 ? (
-              comments.map((c) => (
+          {relatedVideos.length > 0 ? (
+            relatedVideos
+              .filter((vid) => vid._id !== id)
+              .slice(0, 10)
+              .map((vid) => (
                 <div
-                  key={c._id}
-                  className="flex gap-3 bg-gray-800 p-3 rounded-lg text-gray-200"
+                  key={vid._id}
+                  className="flex gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition"
+                  onClick={() => navigate(`/player/${vid._id}`)}
                 >
                   <img
-                    src={c.ownerDetails?.avatar || "/images/default-avatar.jpg"}
-                    alt={c.ownerDetails?.fullName || "User"}
-                    className="w-10 h-10 rounded-full object-cover"
+                    src={vid.thumbnail || "/images/default-thumbnail.jpg"}
+                    alt={vid.title}
+                    className="w-40 h-24 rounded-lg object-cover"
                   />
-                  <div>
-                    <p className="font-semibold">
-                      {capitalizeName(c.ownerDetails?.fullName || "Unknown")}
+                  <div className="flex flex-col justify-center w-[60%]">
+                    <p className="font-medium text-gray-100 text-sm line-clamp-2">
+                      {vid.title}
                     </p>
-                    <p className="text-sm">{c.content}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatDate(c.createdAt)}
+                    <p className="text-xs text-gray-400">
+                      {vid.publisher?.fullName || "Uploader"}
                     </p>
                   </div>
                 </div>
               ))
-            ) : (
-              <p className="text-gray-400 text-sm">No comments yet.</p>
-            )}
-          </div>
-
-          {/* Load More Button */}
-          {hasMore && (
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={loadMoreComments}
-                disabled={loadingComments}
-                className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg disabled:opacity-50"
-              >
-                {loadingComments ? "Loading..." : "Load More Comments"}
-              </button>
-            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">No related videos found</p>
           )}
         </div>
-      </div>
-
-      {/* ---------- RIGHT: Related Videos ---------- */}
-      <div className="lg:w-[30%] w-full h-fit lg:max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
-        <h3 className="text-lg font-semibold text-gray-300 mb-3">
-          Related Videos
-        </h3>
-
-        {relatedVideos.length > 0 ? (
-          relatedVideos
-            .filter((vid) => vid._id !== id)
-            .slice(0, 10)
-            .map((vid) => (
-              <div
-                key={vid._id}
-                className="flex gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition"
-                onClick={() => navigate(`/player/${vid._id}`)}
-              >
-                <img
-                  src={vid.thumbnail || "/images/default-thumbnail.jpg"}
-                  alt={vid.title}
-                  className="w-40 h-24 rounded-lg object-cover"
-                />
-                <div className="flex flex-col justify-center w-[60%]">
-                  <p className="font-medium text-gray-100 text-sm line-clamp-2">
-                    {vid.title}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {vid.publisher?.fullName || "Uploader"}
-                  </p>
-                </div>
-              </div>
-            ))
-        ) : (
-          <p className="text-gray-400 text-sm">No related videos found</p>
-        )}
       </div>
     </div>
   );

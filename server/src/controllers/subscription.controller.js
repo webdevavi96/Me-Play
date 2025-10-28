@@ -94,19 +94,23 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { subscriberId } = req.params;
-    if (!(isValidObjectId(subscriberId))) throw new ApiError(400, "Invalid subscriber Id");
+
+    if (!isValidObjectId(subscriberId)) {
+        throw new ApiError(400, "Invalid subscriber Id");
+    }
+
 
     const channels = await Subscription.aggregate([
         {
-            $match: { subscriber: new mongoose.Types.ObjectId(subscriberId) }
+            $match: { subscriber: new mongoose.Types.ObjectId(subscriberId) },
         },
         {
             $lookup: {
                 from: "users",
                 localField: "channel",
                 foreignField: "_id",
-                as: "channelDetails"
-            }
+                as: "channelDetails",
+            },
         },
         { $unwind: "$channelDetails" },
         {
@@ -116,27 +120,36 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                 username: "$channelDetails.username",
                 fullName: "$channelDetails.fullName",
                 avatar: "$channelDetails.avatar",
-                coverImage: "$channelDetails.coverImage"
-            }
-        }
+                coverImage: "$channelDetails.coverImage",
+            },
+        },
     ]);
 
-    if (!channels.length) throw new ApiError(404, "User has not subscribed to any channels yet");
+    // if user has no subscriptions
+    if (!channels.length) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, [], "No subscriptions found"));
+    }
 
     const subscribedChannelsCount = channels.length;
 
-    const isSelf = channels.some(
-        (sub) => sub.channelId.toString() === req.user?._id.toString()
-    );
+    // check if user is viewing their own subscriptions
+    const isSelf =
+        req.user && req.user._id.toString() === subscriberId.toString();
 
     const data = {
-        channels: channels[0],
+        channels,
         subscribedChannelsCount,
-        isSelf
+        isSelf,
     };
 
     return res.status(200).json(
-        new ApiResponse(200, data, "Subscribed channels fetched successfully")
+        new ApiResponse(
+            200,
+            data,
+            "Subscribed channels fetched successfully"
+        )
     );
 });
 

@@ -32,7 +32,7 @@ router.route("/video-status/:videoId").get(
     verifyJWT,
     togglePublishStatus
 );
-router.route("/delete-video/:videoId").get(
+router.route("/delete/:videoId").get(
     verifyJWT,
     deleteVideo
 );
