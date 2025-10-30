@@ -72,10 +72,10 @@ function Dashboard() {
       <div className="bg-gray-900 rounded-xl overflow-hidden shadow-lg">
         <Back />
         <div className="h-40 bg-gray-800">
-          {user?.banner && (
+          {user?.coverImage && (
             <img
-              src={user.banner}
-              alt="Banner"
+              src={user.coverImage}
+              alt="Cover Image"
               className="w-full h-full object-cover"
             />
           )}
@@ -176,13 +176,15 @@ function Dashboard() {
 export default Dashboard;
 
 // ✅ Reusable grid
-function VideoGrid({ title, videos, onClick }) {
+function VideoGrid({ title, videos = [], onClick }) {
+  const safeVideos = Array.isArray(videos) ? videos : [];
+
   return (
     <div className="space-y-4 mt-4">
       {title && <h3 className="text-white font-semibold">{title}</h3>}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {videos.length > 0 ? (
-          videos.map((video) => (
+        {safeVideos.length > 0 ? (
+          safeVideos.map((video) => (
             <div
               key={video._id || video.id}
               className="bg-gray-800 rounded-lg overflow-hidden shadow hover:scale-[1.02] transition-transform cursor-pointer"

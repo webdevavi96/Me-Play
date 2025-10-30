@@ -101,7 +101,7 @@ function UploadVideo() {
         {/* Thumbnail Upload */}
         <div>
           <label className="block mb-2 text-gray-300 font-medium">
-            Thumbnail (optional)
+            Thumbnail
           </label>
           <input
             type="file"

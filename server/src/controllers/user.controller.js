@@ -27,15 +27,6 @@ const generateAccesssAndRefreshToken = async (userId) => {
 // Register methode definition ->
 const registerUser = asyncHandler(async (req, res) => {
     // get user details from front end
-    // validaton - not empty
-    // check if user already exists: images, email
-    // check for images, check for avatar
-    // upload them to cloudinary, avatar
-    // create user object - create entry in db
-    // remove password and refresh token field from response
-    // check for user creation
-    // return response
-
     const { fullName, username, email, password } = req.body
 
     // Validating user data
@@ -50,7 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     // Throwing a new error to client
-    if (existingUser) throw new ApiError(409, "User with username and email already exists");
+    if (existingUser) throw new ApiError(409, "User with these credentials already exist already exists");
 
     // storing the refrence path of the files 
     const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -65,7 +56,8 @@ const registerUser = asyncHandler(async (req, res) => {
     const avatar = await uploadToCloudinary(avatarLocalPath);
     const coverImage = await uploadToCloudinary(coverImageLocalPath);
 
-    if (!avatar) throw new ApiError(400, "Avatar Image is required!");
+    if (!avatar) throw new ApiError(501, "Internal server error");
+    if (!coverImage) throw new ApiError(501, "Internal server error");
 
     // Creating user in database
     const user = await User.create({
@@ -89,23 +81,20 @@ const registerUser = asyncHandler(async (req, res) => {
 // Login methode definition -
 const LogInUser = asyncHandler(async (req, res) => {
     // get user details from front end.
-    // username or email.
-    // Validate whether the details or not empty.
-    // Verify the details that user exists or not.
-    // Check for password is correct or not.
-    // access token and refresh token.
-    // send cookie.
-
     const { username, email, password } = req.body;
 
+    // Validate user details
     if (!(username || email)) throw new ApiError(400, "username or password is required!");
 
+    // Find the user in DB
     const user = await User.findOne({ $or: [{ username }, { email }] });
     if (!user) throw new ApiError(404, "User does not exist!");
 
+    // Check password
     const isPassword = await user.isPasswordCorrect(password);
     if (!isPassword) throw new ApiError(401, "Incorrect password!");
 
+    // Generate tokens
     const { accessToken, refreshToken } = await generateAccesssAndRefreshToken(user._id);
 
     user.refreshToken = refreshToken;

@@ -1,5 +1,15 @@
 import axios from 'axios';
 
+async function registerServices(data) {
+    try {
+        const response = await axios.post("/api/v1/users/register", data, { withCredentials: true });
+        return response.data;
+    } catch (error) {
+        console.error(error)
+        return
+    }
+};
+
 async function loginServices(data) {
 
     try {
@@ -13,17 +23,6 @@ async function loginServices(data) {
     }
 };
 
-async function register(data) {
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_AUTH_URL}/register`, data, {
-            withCredentials: true
-        });
-        return response.data.user;
-    } catch (error) {
-        console.error(error)
-    }
-};
 
 async function logout() {
 
@@ -112,4 +111,4 @@ async function chnageCurrentPassword(data) {
 };
 
 
-export { loginServices, logout, register, history, updateAccountDetails, updateUserAvatar, updateUserCoverImage, chnageCurrentPassword, channel }
+export { registerServices, loginServices, logout, history, updateAccountDetails, updateUserAvatar, updateUserCoverImage, chnageCurrentPassword, channel }
