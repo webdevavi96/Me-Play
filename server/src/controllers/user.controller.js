@@ -125,7 +125,7 @@ const LogInUser = asyncHandler(async (req, res) => {
 // Log out user ->
 const logOutUser = asyncHandler(async (req, res) => {
     User.findOneAndUpdate(req.user._id, {
-        $set: {
+        $unset: {
             refreshToken: undefined
         }
     },
@@ -143,8 +143,8 @@ const logOutUser = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .cookie("accessToken", "", { ...options, maxAge: 0 })
-        .cookie("refreshToken", "", { ...options, maxAge: 0 })
+        .clearCookie("accessToken", "", { ...options, maxAge: 0 })
+        .clearCookie("refreshToken", "", { ...options, maxAge: 0 })
         .json(new ApiResponse(200, "Log out successfull!"))
 
 });
